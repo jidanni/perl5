@@ -56,10 +56,6 @@ typedef FILE * OutputStream;
 # define NORETURN_FUNCTION_END /* NOT REACHED */ return 0
 #endif
 
-#ifndef OpSIBLING
-#  define OpSIBLING(o) (o)->op_sibling
-#endif
-
 static int not_here(const char *s) __attribute__noreturn__;
 static int
 not_here(const char *s)
@@ -67,10 +63,6 @@ not_here(const char *s)
     croak("%s not implemented on this architecture", s);
     NORETURN_FUNCTION_END;
 }
-
-#ifndef PerlIO
-#define PerlIO_fileno(f) fileno(f)
-#endif
 
 static int
 io_blocking(pTHX_ InputStream f, int block)
