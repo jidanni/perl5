@@ -422,6 +422,7 @@ functions are fully supported in modern compilers.
 Nevertheless, there are situations where a function won't do, and a
 macro is required.  One example is when a parameter can be any of
 several types.  A function has to be declared with a single explicit
+parameter type, so a macro may be called for.
 
 Or maybe the code involved is so trivial that a function would be just
 complicating overkill, such as when the macro simply creates a mnemonic
@@ -517,7 +518,7 @@ L<https://perlmonks.org/?node_id=11144355>
 =head2 Portability problems
 
 The following are common causes of compilation and/or execution
-failures, not common to Perl as such.  The C FAQ is good bedtime
+failures, not specific to Perl as such.  The C FAQ is good bedtime
 reading.  Please test your changes with as many C compilers and
 platforms as possible; we will, anyway, and it's nice to save oneself
 from public embarrassment.
@@ -568,7 +569,7 @@ other words, "long long" is not a portable way to specify 64 bits, and
 
 Instead, use the definitions IV, UV, IVSIZE, I32SIZE, and so forth.
 Avoid things like I32 because they are B<not> guaranteed to be
-I<exactly> 32 bits, they are I<at least> 32 bits, nor are they
+I<exactly> 32 bits (they are I<at least> 32 bits), nor are they
 guaranteed to be B<int> or B<long>.  If you explicitly need
 64-bit variables, use I64 and U64.
 
@@ -637,8 +638,8 @@ the bytes can be anything
 =item *
 
 Structs are required to be aligned to the maximum alignment required by
-the fields - which for native types is for usually equivalent to
-sizeof() of the field
+the fields - which for native types is usually equivalent to sizeof() of
+the field
 
 =back
 
@@ -846,7 +847,8 @@ intelligence, but for many types the right format is available as with
 either 'f' or '_f' suffix, for example:
 
    IVdf /* IV in decimal */
-   UVxf /* UV is hexadecimal */
+   UVxf /* UV in hexadecimal */
+   U32of /* A U32 in octal */ 
 
    printf("i = %"IVdf"\n", i); /* The IVdf is a string constant. */
 
@@ -956,8 +958,6 @@ L<http://sourceforge.net/p/predef/wiki/Home/>
 Assuming the contents of static memory pointed to by the return values
 of Perl wrappers for C library functions doesn't change.  Many C library
 functions return pointers to static storage that can be overwritten by
-subsequent calls to the same or related functions.  Perl has wrappers
-for some of these functions.  Originally many of those wrappers returned
 those volatile pointers.  But over time almost all of them have evolved
 to return stable copies.  To cope with the remaining ones, do a
 L<perlapi/savepv> to make a copy, thus avoiding these problems.  You
@@ -966,6 +966,35 @@ you don't have control over when it gets freed, you'll need to make the
 copy in a mortal scalar, like so
 
  SvPVX(sv_2mortal(newSVpv(volatile_string, 0)))
+
+Originally many of those wrappers returned
+subsequent calls to the same or related functions.  Perl has
+light-weight wrappers for some of these functions, and which propagate
+this issue on to the caller, you.  You'll have to save or finish using
+the result before calling the function again.  In some cases they aren't
+thread safe, and you'll need to save or use the value before any other
+thread can call that function.  You don't generally have control over
+when such a thread might want to use that function, so this can cause a
+race.  L<perlxs/Thread-aware system interfaces> has some information on
+such functions, and ways to cope.  But it may come down to not using a
+problematic function at all, or protecting its use with a mutex, and
+being sure that any other applications that might be running in another
+thread also use that mutex.  Until Perl 5.32, C<PerlEnv_getenv> was such
+a function, but now it returns a mortalized copy of the result.  But
+again, if someone is writing to the environment without using the mutex
+that C<> expects, they can memory in the C library, which could be
+overwritten at any time by another thread accessing the environment in
+some way, or on some platforms, by a subsequent C<PerlEnv_getenv> call.
+
+the interface to the
+
+environment variables that are in effect for the program.  Prior to Perl
+5.32, C<PerlEnv_getenv>, to get values from the environment, also was
+such a function.  But starting in that release, the return is a mortal
+copy of what is in the environment, so is safe to use in the remainder
+of the calling function, but needs to be copied if you want a stable
+value beyond that.
+
 
 =back
 
