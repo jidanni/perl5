@@ -418,12 +418,12 @@ label:
 			break;
 
 		case 'C':
-			if (!isdigit((unsigned char)*buf))
+			if (!isDIGIT((unsigned char)*buf))
 				return 0;
 
 			/* XXX This will break for 3-digit centuries. */
                         len = 2;
-			for (i = 0; len && *buf != 0 && isdigit((unsigned char)*buf); buf++) {
+			for (i = 0; len && *buf != 0 && isDIGIT((unsigned char)*buf); buf++) {
 				i *= 10;
 				i += *buf - '0';
 				len--;
@@ -505,11 +505,11 @@ label:
 			break;
 
 		case 'j':
-			if (!isdigit((unsigned char)*buf))
+			if (!isDIGIT((unsigned char)*buf))
 				return 0;
 
 			len = 3;
-			for (i = 0; len && *buf != 0 && isdigit((unsigned char)*buf); buf++) {
+			for (i = 0; len && *buf != 0 && isDIGIT((unsigned char)*buf); buf++) {
 				i *= 10;
 				i += *buf - '0';
 				len--;
@@ -526,11 +526,11 @@ label:
 			if (*buf == 0 || isSPACE((unsigned char)*buf))
 				break;
 
-			if (!isdigit((unsigned char)*buf))
+			if (!isDIGIT((unsigned char)*buf))
 				return 0;
 
 			len = 2;
-			for (i = 0; len && *buf != 0 && isdigit((unsigned char)*buf); buf++) {
+			for (i = 0; len && *buf != 0 && isDIGIT((unsigned char)*buf); buf++) {
 				i *= 10;
 				i += *buf - '0';
 				len--;
@@ -563,11 +563,11 @@ label:
 			 * XXX The %l specifier may gobble one too many
 			 * digits if used incorrectly.
 			 */
-            if (!isdigit((unsigned char)*buf))
+            if (!isDIGIT((unsigned char)*buf))
 				return 0;
 
 			len = 2;
-			for (i = 0; len && *buf != 0 && isdigit((unsigned char)*buf); buf++) {
+			for (i = 0; len && *buf != 0 && isDIGIT((unsigned char)*buf); buf++) {
 				i *= 10;
 				i += *buf - '0';
 				len--;
@@ -648,11 +648,11 @@ label:
 			 * point to calculate a real value, so just check the
 			 * range for now.
 			 */
-            if (!isdigit((unsigned char)*buf))
+            if (!isDIGIT((unsigned char)*buf))
 				return 0;
 
 			len = 2;
-			for (i = 0; len && *buf != 0 && isdigit((unsigned char)*buf); buf++) {
+			for (i = 0; len && *buf != 0 && isDIGIT((unsigned char)*buf); buf++) {
 				i *= 10;
 				i += *buf - '0';
 				len--;
@@ -667,7 +667,7 @@ label:
 
 		case 'u':
 		case 'w':
-			if (!isdigit((unsigned char)*buf))
+			if (!isDIGIT((unsigned char)*buf))
 				return 0;
 
 			i = *buf - '0';
@@ -694,11 +694,11 @@ label:
 			 * XXX The %e specifier may gobble one too many
 			 * digits if used incorrectly.
 			 */
-                        if (!isdigit((unsigned char)*buf))
+                        if (!isDIGIT((unsigned char)*buf))
 				return 0;
 
 			len = 2;
-			for (i = 0; len && *buf != 0 && isdigit((unsigned char)*buf); buf++) {
+			for (i = 0; len && *buf != 0 && isDIGIT((unsigned char)*buf); buf++) {
 				i *= 10;
 				i += *buf - '0';
 				len--;
@@ -749,11 +749,11 @@ label:
 			break;
 
 		case 'm':
-			if (!isdigit((unsigned char)*buf))
+			if (!isDIGIT((unsigned char)*buf))
 				return 0;
 
 			len = 2;
-			for (i = 0; len && *buf != 0 && isdigit((unsigned char)*buf); buf++) {
+			for (i = 0; len && *buf != 0 && isDIGIT((unsigned char)*buf); buf++) {
 				i *= 10;
 				i += *buf - '0';
 				len--;
@@ -820,11 +820,11 @@ label:
 			if (*buf == 0 || isSPACE((unsigned char)*buf))
 				break;
 
-			if (!isdigit((unsigned char)*buf))
+			if (!isDIGIT((unsigned char)*buf))
 				return 0;
 
 			len = (c == 'Y') ? 4 : 2;
-			for (i = 0; len && *buf != 0 && isdigit((unsigned char)*buf); buf++) {
+			for (i = 0; len && *buf != 0 && isDIGIT((unsigned char)*buf); buf++) {
 				i *= 10;
 				i += *buf - '0';
 				len--;
@@ -883,7 +883,7 @@ label:
 			buf++;
 			i = 0;
 			for (len = 4; len > 0; len--) {
-				if (isdigit((int)*buf)) {
+				if (isDIGIT((int)*buf)) {
 					i *= 10;
 					i += *buf - '0';
 					buf++;
