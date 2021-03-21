@@ -392,8 +392,8 @@ _strptime(pTHX_ const char *buf, const char *fmt, struct tm *tm, int *got_GMT)
 		c = *ptr++;
 		
 		if (c != '%') {
-			if (isspace((unsigned char)c))
-				while (*buf != 0 && isspace((unsigned char)*buf))
+			if (isSPACE((unsigned char)c))
+				while (*buf != 0 && isSPACE((unsigned char)*buf))
 					buf++;
 			else if (c != *buf++)
 				return 0;
@@ -480,9 +480,9 @@ label:
 
 		case 'n': /* whitespace */
 		case 't':
-			if (!isspace((unsigned char)*buf))
+			if (!isSPACE((unsigned char)*buf))
 				return 0;
-			while (isspace((unsigned char)*buf))
+			while (isSPACE((unsigned char)*buf))
 				buf++;
 			break;
 		
@@ -523,7 +523,7 @@ label:
 
 		case 'M':
 		case 'S':
-			if (*buf == 0 || isspace((unsigned char)*buf))
+			if (*buf == 0 || isSPACE((unsigned char)*buf))
 				break;
 
 			if (!isdigit((unsigned char)*buf))
@@ -546,8 +546,8 @@ label:
 				tm->tm_sec = i;
 			}
 
-			if (*buf != 0 && isspace((unsigned char)*buf))
-				while (*ptr != 0 && !isspace((unsigned char)*ptr))
+			if (*buf != 0 && isSPACE((unsigned char)*buf))
+				while (*ptr != 0 && !isSPACE((unsigned char)*ptr))
 					ptr++;
 			break;
 
@@ -580,8 +580,8 @@ label:
 
 			tm->tm_hour = i;
 
-			if (*buf != 0 && isspace((unsigned char)*buf))
-				while (*ptr != 0 && !isspace((unsigned char)*ptr))
+			if (*buf != 0 && isSPACE((unsigned char)*buf))
+				while (*ptr != 0 && !isSPACE((unsigned char)*ptr))
 					ptr++;
 			break;
 
@@ -660,8 +660,8 @@ label:
 			if (i > 53)
 				return 0;
 
-			if (*buf != 0 && isspace((unsigned char)*buf))
-				while (*ptr != 0 && !isspace((unsigned char)*ptr))
+			if (*buf != 0 && isSPACE((unsigned char)*buf))
+				while (*ptr != 0 && !isSPACE((unsigned char)*ptr))
 					ptr++;
 			break;
 
@@ -679,8 +679,8 @@ label:
 			tm->tm_wday = i;
 
 			buf++;
-			if (*buf != 0 && isspace((unsigned char)*buf))
-				while (*ptr != 0 && !isspace((unsigned char)*ptr))
+			if (*buf != 0 && isSPACE((unsigned char)*buf))
+				while (*ptr != 0 && !isSPACE((unsigned char)*ptr))
 					ptr++;
 			break;
 
@@ -708,8 +708,8 @@ label:
 
 			tm->tm_mday = i;
 
-			if (*buf != 0 && isspace((unsigned char)*buf))
-				while (*ptr != 0 && !isspace((unsigned char)*ptr))
+			if (*buf != 0 && isSPACE((unsigned char)*buf))
+				while (*ptr != 0 && !isSPACE((unsigned char)*ptr))
 					ptr++;
 			break;
 
@@ -763,8 +763,8 @@ label:
 
 			tm->tm_mon = i - 1;
 
-			if (*buf != 0 && isspace((unsigned char)*buf))
-				while (*ptr != 0 && !isspace((unsigned char)*ptr))
+			if (*buf != 0 && isSPACE((unsigned char)*buf))
+				while (*ptr != 0 && !isSPACE((unsigned char)*ptr))
 					ptr++;
 			break;
 
@@ -817,7 +817,7 @@ label:
 
 		case 'Y':
 		case 'y':
-			if (*buf == 0 || isspace((unsigned char)*buf))
+			if (*buf == 0 || isSPACE((unsigned char)*buf))
 				break;
 
 			if (!isdigit((unsigned char)*buf))
@@ -838,8 +838,8 @@ label:
 
 			tm->tm_year = i;
 
-			if (*buf != 0 && isspace((unsigned char)*buf))
-				while (*ptr != 0 && !isspace((unsigned char)*ptr))
+			if (*buf != 0 && isSPACE((unsigned char)*buf))
+				while (*ptr != 0 && !isSPACE((unsigned char)*ptr))
 					ptr++;
 			break;
 
