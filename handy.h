@@ -366,7 +366,8 @@ checks often check for things that Really Cannot Happen, and Coverity
 detects that and gets all excited. */
 
 #if   defined(DEBUGGING) && !defined(__COVERITY__)                        \
- && ! defined(PERL_SMALL_MACRO_BUFFER)
+ && ! defined(PERL_SMALL_MACRO_BUFFER)\
+ && ! defined __CYGWIN__
 #   define __ASSERT_(statement)  assert(statement),
 #else
 #   define __ASSERT_(statement)
