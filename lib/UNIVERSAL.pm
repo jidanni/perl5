@@ -2,18 +2,8 @@ package UNIVERSAL;
 
 our $VERSION = '1.15';
 
-# UNIVERSAL should not contain any extra subs/methods beyond those
-# that it exists to define. The existence of import() below is a historical
-# accident that can't be fixed without breaking code.
-
-# Make sure that even though the import method is called, it doesn't do
-# anything unless called on UNIVERSAL.
-sub import {
-    return unless $_[0] eq __PACKAGE__;
-    return unless @_ > 1;
-    require Carp;
-    Carp::croak("UNIVERSAL does not export anything");
-}
+# UNIVERSAL.pm should not contain any methods/subs, they
+# are all defined in universal.c
 
 1;
 __END__
