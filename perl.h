@@ -1073,6 +1073,11 @@ violations are fatal.
 
 #include "perl_langinfo.h"    /* Needed for _NL_LOCALE_NAME */
 
+#ifdef NO_LC_ALL
+#  undef LC_ALL
+#  undef LC_ALL_MASK
+#endif
+
 /* =========================================================================
  * The defines from here to the following ===== line are unfortunately
  * duplicated in makedef.pl, and changes here MUST also be made there */
@@ -1120,6 +1125,8 @@ violations are fatal.
 #      define USE_LOCALE_CTYPE
 #      define LC_CTYPE_INDEX_             0
 #      define PERL_DUMMY_CTYPE_           LC_CTYPE_INDEX_
+#    else
+#      undef LC_CTYPE
 #    endif
 #    define LC_ALL_CTYPE_COUNTER_         1
 #  else
@@ -1133,6 +1140,8 @@ violations are fatal.
 #      define USE_LOCALE_NUMERIC
 #      define LC_NUMERIC_INDEX_           PERL_DUMMY_CTYPE_ + 1
 #      define PERL_DUMMY_NUMERIC_         LC_NUMERIC_INDEX_
+#    else
+#      undef LC_NUMERIC
 #    endif
 #    define LC_ALL_NUMERIC_COUNTER_       LC_ALL_CTYPE_COUNTER_ + 1
 #  else
@@ -1149,6 +1158,8 @@ violations are fatal.
 #      define USE_LOCALE_COLLATE
 #      define LC_COLLATE_INDEX_           PERL_DUMMY_NUMERIC_ + 1
 #      define PERL_DUMMY_COLLATE_         LC_COLLATE_INDEX_
+#    else
+#      undef LC_COLLATE
 #    endif
 #    define LC_ALL_COLLATE_COUNTER_       LC_ALL_NUMERIC_COUNTER_ + 1
 #  else
@@ -1162,6 +1173,8 @@ violations are fatal.
 #      define USE_LOCALE_TIME
 #      define LC_TIME_INDEX_              PERL_DUMMY_COLLATE_ + 1
 #      define PERL_DUMMY_TIME_            LC_TIME_INDEX_
+#    else
+#      undef LC_TIME
 #    endif
 #    define LC_ALL_TIME_COUNTER_          LC_ALL_COLLATE_COUNTER_ + 1
 #  else
@@ -1175,6 +1188,8 @@ violations are fatal.
 #      define USE_LOCALE_MESSAGES
 #      define LC_MESSAGES_INDEX_          PERL_DUMMY_TIME_ + 1
 #      define PERL_DUMMY_MESSAGES_        LC_MESSAGES_INDEX_
+#    else
+#      undef LC_MESSAGES
 #    endif
 #    define LC_ALL_MESSAGES_COUNTER_      LC_ALL_TIME_COUNTER_ + 1
 #  else
@@ -1188,6 +1203,8 @@ violations are fatal.
 #      define USE_LOCALE_MONETARY
 #      define LC_MONETARY_INDEX_          PERL_DUMMY_MESSAGES_ + 1
 #      define PERL_DUMMY_MONETARY_        LC_MONETARY_INDEX_
+#    else
+#      undef LC_MONETARY
 #    endif
 #    define LC_ALL_MONETARY_COUNTER_      LC_ALL_MESSAGES_COUNTER_ + 1
 #  else
