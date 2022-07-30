@@ -28,6 +28,12 @@
 #   include "config.h"
 #endif
 
+#ifndef WIN32   /* XXX temp */
+#  define _configthreadlocale(x) (! cBOOL(x))
+#  define _DISABLE_PER_THREAD_LOCALE 0
+#  define _ENABLE_PER_THREAD_LOCALE 1
+#endif
+
 /*
 =for apidoc_section $debugging
 =for apidoc CmnW ||_aDEPTH
