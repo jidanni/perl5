@@ -47,6 +47,8 @@ extern "C" {
 #  define TZSET_UNLOCK  ENV_UNLOCK
 #endif
 
+/* XXX bunch of other locks need, tzset putenv, getenv; haven't looked */
+
 #ifdef WIN32
 
 /*
@@ -119,6 +121,7 @@ extern "C" {
 #undef malloc
 #undef free
 
+/* Should call the one in Posix:: */
 static void
 fix_win32_tzenv(void)
 {
@@ -824,6 +827,7 @@ label:
 				return 0;
 
 			len = (c == 'Y') ? 4 : 2;
+                        /* XXX note this is a bug is isdigit, subtracting '0' because could be another set of 10. */
 			for (i = 0; len && *buf != 0 && isDIGIT((unsigned char)*buf); buf++) {
 				i *= 10;
 				i += *buf - '0';
@@ -1014,6 +1018,10 @@ _strftime(fmt, epoch, islocal = 1)
 
         len = strftime(tmpbuf, TP_BUF_SIZE, fmt, &mytm);
         STRFTIME_UNLOCK;
+        /* char *  Perl_my_strftime(aTHX_ fmt, int sec, int min,
+                          int hour, int mday, int mon, int year,
+                          int wday, int yday, int isdst)
+                          */
         /*
         ** The following is needed to handle to the situation where
         ** tmpbuf overflows.  Basically we want to allocate a buffer
