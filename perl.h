@@ -7142,7 +7142,8 @@ the plain locale pragma without a parameter (S<C<use locale>>) is in effect.
 
 #else   /* Below: Threaded, and locales are supported */
 
-    /* A locale mutex is required on all such threaded builds.
+    /* A locale mutex is required on all such threaded builds, if only for
+     * certain rare cases (which you can grep for).
      *
      * This mutex simulates a general (or recursive) semaphore.  The current
      * thread will lock the mutex if the per-thread variable is zero, and then
@@ -7558,7 +7559,8 @@ cannot have changed since the precalculation.
 /* The next two macros should be rarely used, and only after being sure that
  * this is what is needed */
 #  define SET_NUMERIC_STANDARD()                                            \
-        STMT_START {                                                        \
+	STMT_START {                                                        \
+          /*assert(PL_locale_mutex_depth > 0);*/                            \
             DEBUG_Lv(PerlIO_printf(Perl_debug_log,                          \
                                "%s: %d: lc_numeric standard=%d\n",          \
                                 __FILE__, __LINE__, PL_numeric_standard));  \
