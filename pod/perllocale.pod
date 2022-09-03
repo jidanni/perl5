@@ -1685,7 +1685,10 @@ more bugs.
 XS code or C-language libraries called from it that use the system
 L<C<setlocale(3)>> function (except on Windows) likely will not work
 from a multi-threaded application without changes.  See
-L<perlxs/Locale-aware XS code>.
+L<perlxs/Locale-aware XS code>.  Some such have been so changed, but
+call C libraries that can't be changed.  This will work, but as long as
+only a single thread in your application uses such a library.  C<Tk> is
+one such library.
 
 An XS module that is locale-dependent could have been written under the
 assumption that it will never be called in a multi-threaded environment,
