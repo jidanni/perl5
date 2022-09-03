@@ -29,6 +29,14 @@ my @known_categories = ( qw(LC_ALL LC_COLLATE LC_CTYPE LC_MESSAGES LC_MONETARY
                             LC_TOD LC_NAME));
 my @platform_categories;
 
+my $debug = 0;
+#$debug = 1 if $^O =~ / MSWin32 /xi; #| darwin /xi;
+#$debug = 1 if $^O =~ /cygwin /xi; #| darwin /xi; # or $^O =~ /MSWin32/i;
+my $save_D = $^D;
+#local $^D = $save_D if $debug;
+#my $d = $^D;
+#$d |= (0x04000000|0x00100000) if $debug;
+
 sub category_excluded($) {
     my $cat_name = shift =~ s/^LC_//r;
 
@@ -198,10 +206,12 @@ sub _trylocale ($$$$) { # For use only by other functions in this file!
 
         # Incompatible locales aren't warned about unless using locales.
         use locale;
+        #local $^D = $d;
 
         my $result = setlocale($category, $locale);
         return unless defined $result;
 
+        #$^D = $save_D;
         no locale;
 
         # We definitely don't want the locale set to something that is
@@ -219,6 +229,19 @@ sub _trylocale ($$$$) { # For use only by other functions in this file!
         # some versions where setlocale() turns a legal input locale name into
         # an illegal return value, which it can't later parse.
         return if $result =~ /,/;
+# Was from env_win repo
+#210,220d209
+# <         $result =~ s/-//g;
+# <         my $dashless_locale = $locale =~ s/-//gr;
+# <         #use if $^O eq 'MSWin32', "re", qw(Debug ALL);
+# <         if (    $result !~ / ^ \Q$dashless_locale\E /xi
+# < 
+# <                   # C and POSIX are interchangeable
+# <             && ! (CORE::fc($locale) eq 'posix' && CORE::fc($result) eq 'c'))
+# <         {
+# <             _my_diag("setlocale('$locale') returned '$result'\n");
+# <         }
+# < 
 
         return unless $plays_well || $allow_incompatible;
     }
@@ -256,13 +279,13 @@ sub _decode_encodings { # For use only by other functions in this file!
 sub locales_enabled(;$) {
     # If no parameter is specified, the function returns 1 if there is any
     # "safe" locale handling available to the caller; otherwise 0.  Safeness
-    # is defined here as the caller operating in the main thread of a program,
+    # XXX is defined here as the caller operating in the main thread of a program,
     # or if threaded locales are safe on the platform and Configured to be
     # used.  This sub is used for testing purposes, and for those, this
     # definition of safety is sufficient, and necessary to get some tests to
     # run on certain configurations on certain platforms.  But beware that the
     # main thread can change the locale of any subthreads unless
-    # ${^SAFE_LOCALES} is non-zero.
+    # XXX ${^SAFE_LOCALES} is non-zero.
     #
     # Use the optional parameter to discover if a particular category or
     # categories are available on the system.  1 is returned if the global
@@ -464,6 +487,7 @@ sub find_locales ($;$) {
         && open(LOCALES, '-|', "/usr/bin/locale -a 2>/dev/null"))
     {
         while (<LOCALES>) {
+        #last;
             # It seems that /usr/bin/locale steadfastly outputs 8 bit data, which
             # ain't great when we're running this testPERL_UNICODE= so that utf8
             # locales will cause all IO hadles to default to (assume) utf8
@@ -580,10 +604,15 @@ sub is_locale_utf8 ($) { # Return a boolean as to if core Perl thinks the input
         return 0;
     }
 
+    #local $^D = $d;
+    print STDERR "# ", __FILE__, ": ", __LINE__, ": ", "is_locale_utf8: $locale\n" if $debug;
+
     if (! setlocale(&POSIX::LC_CTYPE(), $locale)) {
         _my_fail("Verify could setlocale to $locale");
         return 0;
     }
+    #$^D = $save_D;
+    print STDERR "# ", __FILE__, ": ", __LINE__, ": ", "is_locale_utf8: $locale\n" if $debug;
 
     my $ret = 0;
 
@@ -685,7 +714,9 @@ sub find_utf8_turkic_locales (;$) {
     my $save_locale = setlocale(&POSIX::LC_CTYPE());
     foreach my $locale (find_utf8_ctype_locales(shift)) {
         use locale;
+        #local $^D = $d;
         setlocale(&POSIX::LC_CTYPE(), $locale);
+        #$^D = $save_D;
         push @return, $locale if uc('i') eq "\x{130}";
     }
 
