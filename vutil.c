@@ -4,6 +4,7 @@
 #ifdef PERL_CORE
 #  include "vutil.h"
 #endif
+#define PERL_IN_VUTIL_C
 
 #define VERSION_MAX 0x7FFFFFFF
 
