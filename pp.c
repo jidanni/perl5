@@ -651,6 +651,18 @@ PP(pp_study)
 {
     dSP; dTOPss;
     STRLEN len;
+#ifdef PERL_IMPLICIT_CONTEXT
+#  ifdef WIN32
+#    include "Sysinfoapi.h"
+    MEMORYSTATUSEX statex;
+    statex.dwLength = sizeof (statex);
+    GlobalMemoryStatusEx (&statex);
+
+    DEBUG_U(PerlIO_printf(Perl_debug_log, "%s:%d:%p: %llu\n", __FILE__, __LINE__, aTHX_ statex.ullAvailVirtual));
+#  else
+    /*DEBUG_U(PerlIO_printf(Perl_debug_log, "%s:%d:%p: %p\n", __FILE__, __LINE__, aTHX_ sbrk((intptr_t) 0)));*/
+#  endif
+#endif
 
     (void)SvPV(sv, len);
     if (len == 0 || len > I32_MAX || !SvPOK(sv) || SvUTF8(sv) || SvVALID(sv)) {
