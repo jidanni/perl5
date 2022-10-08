@@ -3025,7 +3025,7 @@ CMpd	|U8 *	|uvoffuni_to_utf8_flags 				\
 Cp	|U8 *	|uvoffuni_to_utf8_flags_msgs				\
 				|NN U8 *d				\
 				|UV input_uv				\
-				|const UV flags 			\
+				|UV flags				\
 				|NULLOK HV **msgs
 Apd	|char * |pv_uni_display |NN SV *dsv				\
 				|NN const U8 *spv			\
