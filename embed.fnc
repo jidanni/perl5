@@ -4234,7 +4234,7 @@ Sx	|SV *	|hv_delete_common					\
 				|U32 hash
 Sx	|void	|clear_placeholders					\
 				|NN HV *hv				\
-				|U32 items
+				|const U32 items
 # if !defined(PURIFY)
 SR	|HE *	|new_he
 # endif /* !defined(PURIFY) */
