@@ -5443,7 +5443,7 @@ CipR	|bool	|check_regnode_after					\
 				|NULLOK const regnode *p		\
 				|const STRLEN extra
 CipR	|regnode *|regnode_after|NULLOK const regnode *p		\
-				|bool varies
+				|const bool varies
 # if defined(DEBUGGING)
 EFp	|int	|re_indentf	|NN const char *fmt			\
 				|U32 depth				\
