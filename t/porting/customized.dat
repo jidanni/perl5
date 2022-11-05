@@ -31,3 +31,4 @@ libnet cpan/libnet/lib/Net/POP3.pm 55a74121d7e6a122f63a12cec945777f6b8aa80b
 libnet cpan/libnet/lib/Net/SMTP.pm 33efbd55e75486fe8201f9c63cf3f0704310a7b6
 libnet cpan/libnet/lib/Net/Time.pm 3c86cd4d4db9ae207070d2e54f4d523b9ad58230
 version cpan/version/lib/version.pm a963b513cf812bd7f4d28b3422efd9904e70a34c
+version vutil.c 88855f7eb6ce443f57565d287ff2a0bbcd443bd2

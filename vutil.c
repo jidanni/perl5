@@ -582,7 +582,8 @@ Perl_upg_version(pTHX_ SV *ver, bool qv)
     PERL_ARGS_ASSERT_UPG_VERSION;
 
     if ( (SvUOK(ver) && SvUVX(ver) > VERSION_MAX)
-	   || (SvIOK(ver) && SvIVX(ver) > VERSION_MAX) ) {
+        || (SvIOK(ver) && SvIVX(ver) > VERSION_MAX) )
+    {
 	/* out of bounds [unsigned] integer */
 	STRLEN len;
 	char tbuf[64];
@@ -670,8 +671,8 @@ VER_NV:
                 else {  /* This value indicates to the restore code that we
                            didn't change the locale */
                     locale_name_on_entry = NULL;
-	    }
-	}
+                }
+            }
             else if (locale_obj_on_entry == PL_underlying_numeric_obj) {
                 /* Here, the locale appears to have been changed to use the
                  * program's underlying locale.  Just use our mechanisms to
@@ -690,19 +691,16 @@ VER_NV:
             }
 
 # endif
-
             /* Prevent recursed calls from trying to change back */
             LOCK_LC_NUMERIC_STANDARD();
-
 #endif
-
 	if (sv) {
-                Perl_sv_setpvf(aTHX_ sv, "%.9" NVff, SvNVX(ver));
+            Perl_sv_setpvf(aTHX_ sv, "%.9" NVff, SvNVX(ver));
 	    len = SvCUR(sv);
 	    buf = SvPVX(sv);
 	}
 	else {
-                len = my_snprintf(tbuf, sizeof(tbuf), "%.9" NVff, SvNVX(ver));
+            len = my_snprintf(tbuf, sizeof(tbuf), "%.9" NVff, SvNVX(ver));
 	    buf = tbuf;
 	}
 
@@ -718,7 +716,6 @@ VER_NV:
             }
 
             LC_NUMERIC_UNLOCK;  /* End critical section */
-
 #  else
 
             if (locale_name_on_entry) {
