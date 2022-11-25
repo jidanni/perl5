@@ -16018,10 +16018,13 @@ perl_clone_using(PerlInterpreter *proto_perl, UV flags,
 #  endif
 #endif /* !USE_LOCALE_NUMERIC */
 #if defined(USE_POSIX_2008_LOCALE)
+    DEBUG_Lv(PerlIO_printf(Perl_debug_log,
+             "(%" LINE_Tf "): PL_cur_locale_obj was %p\n", __LINE__, PL_cur_locale_obj));
     PL_scratch_locale_obj = NULL;
     PL_cur_locale_obj = PL_C_locale_obj;
+    DEBUG_Lv(PerlIO_printf(Perl_debug_log,
+             "(%" LINE_Tf "): PL_cur_locale_obj now %p\n", __LINE__, PL_cur_locale_obj));
 #endif
-
 #ifdef HAS_MBRLEN
     PL_mbrlen_ps = proto_perl->Imbrlen_ps;
 #endif
