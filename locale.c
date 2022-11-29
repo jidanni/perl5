@@ -124,6 +124,7 @@
 static int debug_initialization = 0;
 #  define DEBUG_INITIALIZATION_set(v) (debug_initialization = v)
 #  define DEBUG_LOCALE_INITIALIZATION_  debug_initialization
+#if 0
 /* C standards seem to say that __LINE__ is merely "an integer constant",
  * which means it might be either int, long (with L suffix), or long long
  * (or their corresponding unsigned type).  So, we have to explicitly cast
@@ -139,6 +140,7 @@ static int debug_initialization = 0;
                                       __FILE__, (line_t)__LINE__);
 #  endif
 #  define DEBUG_POST_STMTS  RESTORE_ERRNO;
+#endif
 #else
 #  define debug_initialization 0
 #  define DEBUG_INITIALIZATION_set(v)
