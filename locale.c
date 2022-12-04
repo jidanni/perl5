@@ -893,17 +893,14 @@ S_my_querylocale_i(pTHX_ const unsigned int index)
         /* But we do have up-to-date values when we keep our own records
          * (except some times in initialization, where we get the value from
          * the system. */
-        const char ** which  = (index == LC_ALL_INDEX_)
-                               ? &PL_cur_LC_ALL
-                               : &PL_curlocales[index];
-        if (*which == NULL) {
+        if (PL_curlocales[index] == NULL) {
             STDIZED_SETLOCALE_LOCK;
             retval = stdized_setlocale(category, NULL);
-            *which = savepv(retval);
+            PL_curlocales[index] = savepv(retval);
             STDIZED_SETLOCALE_UNLOCK;
         }
         else {
-            retval = *which;
+            retval = PL_curlocales[index];
         }
 
 #  endif
@@ -942,10 +939,10 @@ S_update_PL_curlocales_i(pTHX_
             PL_curlocales[i] = savepv(new_locale);
         }
 
-        Safefree(PL_cur_LC_ALL);
-        PL_cur_LC_ALL = savepv(calculate_LC_ALL(PL_curlocales));
-        DEBUG_U(PerlIO_printf(Perl_debug_log, "%s\n", PL_cur_LC_ALL));
-        return PL_cur_LC_ALL;
+        Safefree(PL_curlocales[LC_ALL_INDEX_]);
+        PL_curlocales[LC_ALL_INDEX_] = savepv(calculate_LC_ALL(PL_curlocales));
+        DEBUG_U(PerlIO_printf(Perl_debug_log, "%s\n", PL_curlocales[LC_ALL_INDEX_]));
+        return PL_curlocales[LC_ALL_INDEX_];
     }
 
     /* Update the single category's record */
@@ -958,9 +955,9 @@ S_update_PL_curlocales_i(pTHX_
         || (   recalc_LC_ALL == RECALCULATE_LC_ALL_ON_FINAL_INTERATION
             && index == NOMINAL_LC_ALL_INDEX - 1))
     {
-        Safefree(PL_cur_LC_ALL);
-        PL_cur_LC_ALL = savepv(calculate_LC_ALL(PL_curlocales));
-        DEBUG_U(PerlIO_printf(Perl_debug_log, "%s\n", PL_cur_LC_ALL));
+        Safefree(PL_curlocales[LC_ALL_INDEX_]);
+        PL_curlocales[LC_ALL_INDEX_] = savepv(calculate_LC_ALL(PL_curlocales));
+        DEBUG_U(PerlIO_printf(Perl_debug_log, "%s\n", PL_curlocales[LC_ALL_INDEX_]));
     }
 
     return PL_curlocales[index];
@@ -1094,9 +1091,9 @@ S_setlocale_from_aggregate_LC_ALL(pTHX_ const char * locale, const line_t line)
      * categories whose locale is 'C'.  khw thinks it's better to store a
      * complete LC_ALL.  So calculate it. */
     const char * retval = savepv(calculate_LC_ALL(PL_curlocales));
-    Safefree(PL_cur_LC_ALL);
-    PL_cur_LC_ALL = retval;
-        DEBUG_U(PerlIO_printf(Perl_debug_log, "%s\n", PL_cur_LC_ALL));
+    Safefree(PL_curlocales[LC_ALL_INDEX_]);
+    PL_curlocales[LC_ALL_INDEX_] = retval;
+        DEBUG_U(PerlIO_printf(Perl_debug_log, "%s\n", PL_curlocales[LC_ALL_INDEX_]));
 
 #    else
 
@@ -1193,9 +1190,9 @@ S_emulate_setlocale_i(pTHX_
         if (UNLIKELY(   recalc_LC_ALL == RECALCULATE_LC_ALL_ON_FINAL_INTERATION
                      && index == NOMINAL_LC_ALL_INDEX - 1))
         {
-            Safefree(PL_cur_LC_ALL);
-            PL_cur_LC_ALL = savepv(calculate_LC_ALL(PL_curlocales));
-        DEBUG_U(PerlIO_printf(Perl_debug_log, "%s\n", PL_cur_LC_ALL));
+            Safefree(PL_curlocales[LC_ALL_INDEX_]);
+            PL_curlocales[LC_ALL_INDEX_] = savepv(calculate_LC_ALL(PL_curlocales));
+        DEBUG_U(PerlIO_printf(Perl_debug_log, "%s\n", PL_curlocales[LC_ALL_INDEX_]));
         }
 
 #  endif
@@ -7341,7 +7338,7 @@ Perl_switch_locale_context()
 #  ifdef USE_POSIX_2008_LOCALE
 #    ifdef DEBUGGING
     if (PL_phase != PERL_PHASE_CONSTRUCT) DEBUG_U(PerlIO_printf(Perl_debug_log, "switch_locale_context: aTHX=%p, phase=%s, obj=%p\n", aTHX, PL_phase_names[PL_phase], PL_cur_locale_obj));
-#      ifdef USE_PL_CURLOCALES
+#      ifdef USE_PL_CUR_LC_ALL
     if (PL_phase != PERL_PHASE_CONSTRUCT) DEBUG_U(PerlIO_printf(Perl_debug_log, "locale=%s\n", PL_cur_LC_ALL));
 #      endif
 #    endif

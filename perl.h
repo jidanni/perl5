@@ -1375,7 +1375,6 @@ violations are fatal.
     * querylocale; so must keep track of it ourselves */
 #  if (defined(USE_POSIX_2008_LOCALE) && ! defined(USE_QUERYLOCALE))
 #    define USE_PL_CURLOCALES
-#    define USE_PL_CUR_LC_ALL
 #  endif
 
 #  if defined(WIN32) && defined(USE_THREAD_SAFE_LOCALE)

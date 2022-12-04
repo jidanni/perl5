@@ -187,7 +187,6 @@ if ($define{USE_POSIX_2008_LOCALE} && $define{HAS_QUERYLOCALE})
 if ($define{USE_POSIX_2008_LOCALE} && ! $define{USE_QUERYLOCALE})
 {
     $define{USE_PL_CURLOCALES} = 1;
-    $define{USE_PL_CUR_LC_ALL} = 1;
 }
 
 if ($define{WIN32} && $define{USE_THREAD_SAFE_LOCALE})
