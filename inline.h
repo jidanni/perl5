@@ -362,20 +362,24 @@ S_PadnameIN_SCOPE(const PADNAME * const pn, const U32 seq)
 PERL_STATIC_INLINE I32
 Perl_TOPMARK(pTHX)
 {
+#if 0
     DEBUG_s(DEBUG_v(PerlIO_printf(Perl_debug_log,
                                  "MARK top  %p %" IVdf "\n",
                                   PL_markstack_ptr,
                                   (IV)*PL_markstack_ptr)));
+#endif
     return *PL_markstack_ptr;
 }
 
 PERL_STATIC_INLINE I32
 Perl_POPMARK(pTHX)
 {
+#if 0
     DEBUG_s(DEBUG_v(PerlIO_printf(Perl_debug_log,
                                  "MARK pop  %p %" IVdf "\n",
                                   (PL_markstack_ptr-1),
                                   (IV)*(PL_markstack_ptr-1))));
+#endif
     assert((PL_markstack_ptr > PL_markstack) || !"MARK underflow");
     return *PL_markstack_ptr--;
 }
@@ -3215,10 +3219,12 @@ Perl_foldEQ_locale(pTHX_ const char *s1, const char *s2, I32 len)
 
     while (len--) {
         if (*a != *b && *a != PL_fold_locale[*b]) {
+#if 0
             DEBUG_Lv(PerlIO_printf(Perl_debug_log,
                      "%s:%d: Our records indicate %02x is not a fold of %02x"
                      " or its mate %02x\n",
                      __FILE__, __LINE__, *a, *b, PL_fold_locale[*b]));
+#endif
 
             return 0;
         }
