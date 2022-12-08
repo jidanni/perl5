@@ -4291,17 +4291,17 @@ S_my_langinfo_i(pTHX_
     retval = save_to_buffer(nl_langinfo(item), retbufp, retbuf_sizep);
     gwLOCALE_UNLOCK;
 
-    if (utf8ness) {
-        *utf8ness = get_locale_string_utf8ness_i(retval,
-                                                 LOCALE_UTF8NESS_UNKNOWN,
-                                                 locale, cat_index);
-    }
-
     restore_toggled_locale_i(cat_index, orig_switched_locale);
 
 #    ifdef USE_LOCALE_CTYPE
     restore_toggled_locale_c(LC_CTYPE, orig_CTYPE_locale);
 #    endif
+
+    if (utf8ness) {
+        *utf8ness = get_locale_string_utf8ness_i(retval,
+                                                 LOCALE_UTF8NESS_UNKNOWN,
+                                                 locale, cat_index);
+    }
 
     return retval;
 /*--------------------------------------------------------------------------*/
