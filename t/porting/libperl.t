@@ -432,7 +432,7 @@ for my $str (qw(system)) {
 for my $stdio (qw(gets fgets tmpfile sprintf vsprintf)) {
     $unexpected{$stdio} = undef; # No Configure symbol for these.
 }
-for my $str (qw(strcat strcpy strncat strncpy)) {
+for my $str (qw(strncat strncpy)) {
     $unexpected{$str} = undef; # No Configure symbol for these.
 }
 

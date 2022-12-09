@@ -1222,6 +1222,11 @@ Perl_get_deprecated_property_msg(const Size_t warning_offset)
         __attribute__warn_unused_result__;
 #define PERL_ARGS_ASSERT_GET_DEPRECATED_PROPERTY_MSG
 
+PERL_CALLCONV int
+Perl_get_extended_os_errnum(void)
+        __attribute__visibility__("hidden");
+#define PERL_ARGS_ASSERT_GET_EXTENDED_OS_ERRNUM
+
 PERL_CALLCONV void
 Perl_get_hash_seed(pTHX_ unsigned char * const seed_buffer)
         __attribute__visibility__("hidden");
@@ -2010,10 +2015,10 @@ Perl_load_module(pTHX_ U32 flags, SV *name, SV *ver, ...);
         assert(name)
 
 PERL_CALLCONV_NO_RET void
-Perl_locale_panic(const char *msg, const char *file_name, const line_t line, const int errnum)
+Perl_locale_panic(const char *msg, const line_t immediate_caller_line, const char * const higher_caller_file, const line_t higher_caller_line)
         __attribute__noreturn__;
 #define PERL_ARGS_ASSERT_LOCALE_PANIC           \
-        assert(msg); assert(file_name)
+        assert(msg); assert(higher_caller_file)
 
 PERL_CALLCONV OP *
 Perl_localize(pTHX_ OP *o, I32 lex)
@@ -4173,12 +4178,14 @@ Perl_set_context(void *t);
         assert(t)
 
 PERL_CALLCONV void
-Perl_set_numeric_standard(pTHX);
-#define PERL_ARGS_ASSERT_SET_NUMERIC_STANDARD
+Perl_set_numeric_standard(pTHX_ const char * const file, const line_t line);
+#define PERL_ARGS_ASSERT_SET_NUMERIC_STANDARD   \
+        assert(file)
 
 PERL_CALLCONV void
-Perl_set_numeric_underlying(pTHX);
-#define PERL_ARGS_ASSERT_SET_NUMERIC_UNDERLYING
+Perl_set_numeric_underlying(pTHX_ const char * const file, const line_t line);
+#define PERL_ARGS_ASSERT_SET_NUMERIC_UNDERLYING \
+        assert(file)
 
 PERL_CALLCONV void
 Perl_setdefout(pTHX_ GV *gv);
@@ -6980,6 +6987,11 @@ Perl_hfree_next_entry(pTHX_ HV *hv, STRLEN *indexp)
 
 #endif /* defined(PERL_IN_HV_C) || defined(PERL_IN_SV_C) */
 #if defined(PERL_IN_LOCALE_C)
+STATIC const char *
+S_get_displayable_string(pTHX_ const char * const s, const char * const e, const bool is_utf8);
+# define PERL_ARGS_ASSERT_GET_DISPLAYABLE_STRING \
+        assert(s); assert(e)
+
 STATIC utf8ness_t
 S_get_locale_string_utf8ness_i(pTHX_ const char *string, const locale_utf8ness_t known_utf8, const char *locale, const unsigned cat_index);
 # define PERL_ARGS_ASSERT_GET_LOCALE_STRING_UTF8NESS_I
@@ -7001,6 +7013,10 @@ S_populate_hash_from_localeconv(pTHX_ HV *hv, const char *locale, const U32 whic
 
 # endif /* defined(HAS_LOCALECONV) */
 # if defined(USE_LOCALE)
+STATIC const char *
+S_calculate_LC_ALL(pTHX_ const char **category_locales_list, const bool format);
+#   define PERL_ARGS_ASSERT_CALCULATE_LC_ALL
+
 STATIC unsigned int
 S_get_category_index(const int category, const char *locale);
 #   define PERL_ARGS_ASSERT_GET_CATEGORY_INDEX
@@ -7008,6 +7024,14 @@ S_get_category_index(const int category, const char *locale);
 STATIC int
 S_get_category_index_nowarn(const int category);
 #   define PERL_ARGS_ASSERT_GET_CATEGORY_INDEX_NOWARN
+
+STATIC void
+S_give_perl_locale_control_and_free_arg(pTHX_ const char **list, const line_t caller_line);
+#   define PERL_ARGS_ASSERT_GIVE_PERL_LOCALE_CONTROL_AND_FREE_ARG
+
+STATIC const char *
+S_native_querylocale(pTHX_ const unsigned int cat_index);
+#   define PERL_ARGS_ASSERT_NATIVE_QUERYLOCALE
 
 STATIC void
 S_new_LC_ALL(pTHX_ const char *unused, bool force);
@@ -7022,20 +7046,22 @@ S_save_to_buffer(const char *string, const char **buf, Size_t *buf_size);
 #   define PERL_ARGS_ASSERT_SAVE_TO_BUFFER
 
 PERL_STATIC_NO_RET void
-S_setlocale_failure_panic_i(pTHX_ const unsigned int cat_index, const char *current, const char *failed, const line_t caller_0_line, const line_t caller_1_line)
+S_setlocale_failure_panic_i(pTHX_ const unsigned int cat_index, const char *current, const char *failed, const line_t proxy_caller_line, const line_t immediate_caller_line, const char * const higher_caller_file, const line_t higher_caller_line)
         __attribute__noreturn__;
 #   define PERL_ARGS_ASSERT_SETLOCALE_FAILURE_PANIC_I \
-        assert(failed)
-
-STATIC const char *
-S_stdize_locale(pTHX_ const int category, const char *input_locale, const char **buf, Size_t *buf_size, const line_t caller_line);
-#   define PERL_ARGS_ASSERT_STDIZE_LOCALE
+        assert(failed); assert(higher_caller_file)
 
 STATIC const char *
 S_toggle_locale_i(pTHX_ const unsigned switch_cat_index, const char *new_locale, const line_t caller_line);
 #   define PERL_ARGS_ASSERT_TOGGLE_LOCALE_I     \
         assert(new_locale)
 
+#   if 0
+STATIC const char *
+S_stdize_locale(pTHX_ const int category, const char *input_locale, const char **buf, Size_t *buf_size, const line_t caller_line);
+#     define PERL_ARGS_ASSERT_STDIZE_LOCALE
+
+#   endif /* 0 */
 #   if defined(DEBUGGING)
 STATIC char *
 S_my_setlocale_debug_string_i(pTHX_ const unsigned cat_index, const char *locale, const char *retval, const line_t line)
@@ -7056,16 +7082,13 @@ S_my_langinfo_i(pTHX_ const int item, const unsigned int cat_index, const char *
         assert(locale); assert(retbufp)
 
 #   endif /* !( defined(HAS_NL_LANGINFO) || defined(HAS_NL_LANGINFO_L) ) */
-#   if ( !defined(LC_ALL) || defined(USE_POSIX_2008_LOCALE) || defined(WIN32) \
-       ) && !( defined(USE_POSIX_2008_LOCALE) && defined(USE_QUERYLOCALE) )
-STATIC const char *
-S_calculate_LC_ALL(pTHX_ const char **individ_locales);
-#     define PERL_ARGS_ASSERT_CALCULATE_LC_ALL  \
-        assert(individ_locales)
+#   if defined(LC_ALL)
+STATIC bool
+S_setlocale_from_aggregate_LC_ALL(pTHX_ const char *locale, const line_t line);
+#     define PERL_ARGS_ASSERT_SETLOCALE_FROM_AGGREGATE_LC_ALL \
+        assert(locale)
 
-#   endif /* ( !defined(LC_ALL) || defined(USE_POSIX_2008_LOCALE) || \
-             defined(WIN32) ) && !( defined(USE_POSIX_2008_LOCALE) && \
-             defined(USE_QUERYLOCALE) ) */
+#   endif /* defined(LC_ALL) */
 #   if !defined(PERL_NO_INLINE_FUNCTIONS)
 PERL_STATIC_INLINE const char *
 S_mortalized_pv_copy(pTHX_ const char * const pv)
@@ -7112,59 +7135,54 @@ S_get_LC_ALL_display(pTHX);
 #     define PERL_ARGS_ASSERT_GET_LC_ALL_DISPLAY
 
 #   endif /* defined(USE_PERL_SWITCH_LOCALE_CONTEXT) || defined(DEBUGGING) */
+#   if defined(USE_PL_CURLOCALES)
+STATIC const char *
+S_update_PL_curlocales_i(pTHX_ const unsigned int index, const char *new_locale, recalc_lc_all_t recalc_LC_ALL);
+#     define PERL_ARGS_ASSERT_UPDATE_PL_CURLOCALES_I \
+        assert(new_locale)
+
+#   endif /* defined(USE_PL_CURLOCALES) */
 #   if defined(USE_POSIX_2008_LOCALE)
-STATIC const char *
-S_emulate_setlocale_i(pTHX_ const unsigned int index, const char *new_locale, const recalc_lc_all_t recalc_LC_ALL, const line_t line);
-#     define PERL_ARGS_ASSERT_EMULATE_SETLOCALE_I
+STATIC bool
+S_bool_setlocale_2008_i(pTHX_ const unsigned int index, const char *new_locale, const setlocale_returns ret_type, const line_t immediate_caller_line, const char *higher_caller_file, const line_t higher_caller_line);
+#     define PERL_ARGS_ASSERT_BOOL_SETLOCALE_2008_I \
+        assert(new_locale); assert(higher_caller_file)
 
 STATIC const char *
-S_my_querylocale_i(pTHX_ const unsigned int index);
-#     define PERL_ARGS_ASSERT_MY_QUERYLOCALE_I
-
-STATIC const char *
-S_setlocale_from_aggregate_LC_ALL(pTHX_ const char *locale, const line_t line);
-#     define PERL_ARGS_ASSERT_SETLOCALE_FROM_AGGREGATE_LC_ALL \
-        assert(locale)
+S_querylocale_2008_i(pTHX_ const unsigned int index);
+#     define PERL_ARGS_ASSERT_QUERYLOCALE_2008_I
 
 STATIC locale_t
 S_use_curlocale_scratch(pTHX);
 #     define PERL_ARGS_ASSERT_USE_CURLOCALE_SCRATCH
 
-#     if defined(USE_QUERYLOCALE)
-STATIC const char *
-S_calculate_LC_ALL(pTHX_ const locale_t cur_obj);
-#       define PERL_ARGS_ASSERT_CALCULATE_LC_ALL
-
-#     else /* if !defined(USE_QUERYLOCALE) */
-STATIC const char *
-S_update_PL_curlocales_i(pTHX_ const unsigned int index, const char *new_locale, recalc_lc_all_t recalc_LC_ALL);
-#       define PERL_ARGS_ASSERT_UPDATE_PL_CURLOCALES_I \
-        assert(new_locale)
-
-#     endif /* !defined(USE_QUERYLOCALE) */
-#   elif defined(USE_LOCALE_THREADS) && !defined(USE_THREAD_SAFE_LOCALE) && \
-         !defined(USE_THREAD_SAFE_LOCALE_EMULATION) /* && \
+#   elif defined(USE_THREAD_SAFE_LOCALE_EMULATION) /* && \
          !defined(USE_POSIX_2008_LOCALE) */
+STATIC bool
+S_bool_setlocale_emulate_safe_i(pTHX_ const unsigned int index, const char *new_locale, const setlocale_returns ret_type, const line_t immediate_caller_line, const char *higher_caller_file, const line_t higher_caller_line);
+#     define PERL_ARGS_ASSERT_BOOL_SETLOCALE_EMULATE_SAFE_I \
+        assert(new_locale); assert(higher_caller_file)
+
+#   elif defined(USE_LOCALE_THREADS) && !defined(USE_THREAD_SAFE_LOCALE) /* \
+         && !defined(USE_POSIX_2008_LOCALE) && \
+         !defined(USE_THREAD_SAFE_LOCALE_EMULATION) */
+STATIC bool
+S_less_dicey_bool_setlocale_r(pTHX_ const int cat, const char *new_locale, const setlocale_returns ret_type, const line_t immediate_caller_line, const char * const higher_caller_file, const line_t higher_caller_line);
+#     define PERL_ARGS_ASSERT_LESS_DICEY_BOOL_SETLOCALE_R \
+        assert(new_locale); assert(higher_caller_file)
+
+STATIC const char *
+S_less_dicey_querylocale_r(pTHX_ const int category);
+#     define PERL_ARGS_ASSERT_LESS_DICEY_QUERYLOCALE_R
+
 STATIC const char *
 S_less_dicey_setlocale_r(pTHX_ const int category, const char *locale);
 #     define PERL_ARGS_ASSERT_LESS_DICEY_SETLOCALE_R
 
-STATIC void
-S_less_dicey_void_setlocale_i(pTHX_ const unsigned cat_index, const char *locale, const line_t line);
-#     define PERL_ARGS_ASSERT_LESS_DICEY_VOID_SETLOCALE_I \
-        assert(locale)
-
-#     if 0
-STATIC bool
-S_less_dicey_bool_setlocale_r(pTHX_ const int cat, const char *locale);
-#       define PERL_ARGS_ASSERT_LESS_DICEY_BOOL_SETLOCALE_R \
-        assert(locale)
-
-#     endif /* 0 */
 #   endif /* ( defined(USE_LOCALE_THREADS) && \
-             !defined(USE_THREAD_SAFE_LOCALE) && \
-             !defined(USE_THREAD_SAFE_LOCALE_EMULATION) ) && \
-             !defined(USE_POSIX_2008_LOCALE) */
+             !defined(USE_THREAD_SAFE_LOCALE) ) && \
+             !defined(USE_POSIX_2008_LOCALE) && \
+             !defined(USE_THREAD_SAFE_LOCALE_EMULATION) */
 #   if ( defined(USE_POSIX_2008_LOCALE) && !defined(USE_QUERYLOCALE) ) || \
        defined(WIN32)
 STATIC const char *
@@ -7192,13 +7210,6 @@ S_wrap_wsetlocale(pTHX_ const int category, const char *locale);
 
 #   endif /* defined(WIN32) */
 # endif /* defined(USE_LOCALE) */
-# if defined(USE_POSIX_2008_LOCALE) || defined(DEBUGGING)
-STATIC const char *
-S_get_displayable_string(pTHX_ const char * const s, const char * const e, const bool is_utf8);
-#   define PERL_ARGS_ASSERT_GET_DISPLAYABLE_STRING \
-        assert(s); assert(e)
-
-# endif /* defined(USE_POSIX_2008_LOCALE) || defined(DEBUGGING) */
 #endif /* defined(PERL_IN_LOCALE_C) */
 #if defined(PERL_IN_MALLOC_C)
 STATIC int
@@ -10016,6 +10027,13 @@ S_PerlEnv_putenv(pTHX_ char *str);
 
 #   endif /* !defined(PERL_IMPLICIT_SYS) */
 # endif /* defined(USE_ITHREADS) */
+# if defined(USE_THREAD_SAFE_LOCALE_EMULATION)
+PERL_STATIC_FORCE_INLINE int
+Perl_posix_LC_foo_(pTHX_ const int c, const U8 classnum)
+        __attribute__always_inline__;
+#   define PERL_ARGS_ASSERT_POSIX_LC_FOO_
+
+# endif /* defined(USE_THREAD_SAFE_LOCALE_EMULATION) */
 #endif /* !defined(PERL_NO_INLINE_FUNCTIONS) */
 #if defined(PERL_USE_3ARG_SIGHANDLER)
 PERL_CALLCONV Signal_t
@@ -10401,6 +10419,18 @@ Perl_quadmath_format_valid(const char *format)
         assert(format)
 
 #endif /* defined(USE_QUADMATH) */
+#if defined(USE_THREAD_SAFE_LOCALE_EMULATION)
+PERL_CALLCONV void
+Perl_category_lock_i(pTHX_ unsigned cat_index, const char *file, const line_t line);
+# define PERL_ARGS_ASSERT_CATEGORY_LOCK_I       \
+        assert(file)
+
+PERL_CALLCONV void
+Perl_category_unlock_i(pTHX_ unsigned cat_index, const char *file, const line_t line);
+# define PERL_ARGS_ASSERT_CATEGORY_UNLOCK_I     \
+        assert(file)
+
+#endif /* defined(USE_THREAD_SAFE_LOCALE_EMULATION) */
 #if defined(VMS) || defined(WIN32)
 PERL_CALLCONV int
 Perl_do_aspawn(pTHX_ SV *really, SV **mark, SV **sp);

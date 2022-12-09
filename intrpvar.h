@@ -746,17 +746,34 @@ PERLVARI(I, cur_locale_obj, locale_t, NULL)
 #endif
 #ifdef USE_PL_CURLOCALES
 
-PERLVARA(I, curlocales, PERL_LOCALE_CATEGORIES_ALL_COUNT_, const char *)
-
+/* Some configurations do not allow perl to query libc to find out what the
+ * locale for a given category is.  On such platforms this array contains that
+ * information, indexed by the perl-defined category index.  Some
+ * configurations have perl ignoring certain categories.  These are omitted
+ * from this array, but the locale for each such is "C".  Note that this array
+ * keeps the actual locale for each category.  LC_NUMERIC is almost always
+ * toggled into the C locale, and the locale it nominally is is stored as
+ * PL_numeric_name. */
+PERLVARA(I, curlocales, PERL_LOCALE_CATEGORIES_PLUS_LC_ALL_COUNT_,          \
+         const char *)
 #endif
 #ifdef USE_PL_CUR_LC_ALL
 
 PERLVARI(I, cur_LC_ALL, const char *, NULL)
 
 #endif
+#ifdef USE_THREAD_SAFE_LOCALE_EMULATION
+PERLVARA(I, restore_locale, PERL_LOCALE_CATEGORIES_COUNT_, const char *)
+PERLVARA(I, restore_locale_depth, PERL_LOCALE_CATEGORIES_COUNT_, Size_t)
+/* foo is me perlvAR(I,  libc_char_fcn_result, int)       / * Scratch pad */
+#endif
+
+#if defined(USE_LOCALE) && ! defined(USE_THREAD_SAFE_LOCALE)
+PERLVARI(I, perl_controls_locale, bool, true)
+#endif
 #ifdef USE_LOCALE_COLLATE
 
-/* The emory needed to store the collxfrm transformation of a string with
+/* The memory needed to store the collxfrm transformation of a string with
  * length 'x' is predicted by the linear equation mx+b; m=mult, b=base */
 PERLVARI(I, collxfrm_mult,Size_t, 0)	/* Expansion factor in *xfrm();
                                            0 => unknown or bad, depending on

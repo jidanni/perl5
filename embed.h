@@ -925,6 +925,7 @@
 #   define find_script(a,b,c,d)                 Perl_find_script(aTHX_ a,b,c,d)
 #   define force_locale_unlock                  Perl_force_locale_unlock
 #   define free_tied_hv_pool()                  Perl_free_tied_hv_pool(aTHX)
+#   define get_extended_os_errnum               Perl_get_extended_os_errnum
 #   define get_hash_seed(a)                     Perl_get_hash_seed(aTHX_ a)
 #   define get_no_modify()                      Perl_get_no_modify(aTHX)
 #   define get_opargs()                         Perl_get_opargs(aTHX)
@@ -1060,8 +1061,8 @@
 #   define scalar(a)                            Perl_scalar(aTHX_ a)
 #   define scalarvoid(a)                        Perl_scalarvoid(aTHX_ a)
 #   define set_caret_X()                        Perl_set_caret_X(aTHX)
-#   define set_numeric_standard()               Perl_set_numeric_standard(aTHX)
-#   define set_numeric_underlying()             Perl_set_numeric_underlying(aTHX)
+#   define set_numeric_standard(a,b)            Perl_set_numeric_standard(aTHX_ a,b)
+#   define set_numeric_underlying(a,b)          Perl_set_numeric_underlying(aTHX_ a,b)
 #   define setfd_cloexec                        Perl_setfd_cloexec
 #   define setfd_cloexec_for_nonsysfd(a)        Perl_setfd_cloexec_for_nonsysfd(aTHX_ a)
 #   define setfd_cloexec_or_inhexec_by_sysfdness(a) Perl_setfd_cloexec_or_inhexec_by_sysfdness(aTHX_ a)
@@ -1254,6 +1255,7 @@
 #     endif /* !defined(PURIFY) */
 #   endif /* defined(PERL_IN_HV_C) */
 #   if defined(PERL_IN_LOCALE_C)
+#     define get_displayable_string(a,b,c)      S_get_displayable_string(aTHX_ a,b,c)
 #     define get_locale_string_utf8ness_i(a,b,c,d) S_get_locale_string_utf8ness_i(aTHX_ a,b,c,d)
 #     define is_locale_utf8(a)                  S_is_locale_utf8(aTHX_ a)
 #     if defined(HAS_LOCALECONV)
@@ -1261,13 +1263,17 @@
 #       define populate_hash_from_localeconv(a,b,c,d,e) S_populate_hash_from_localeconv(aTHX_ a,b,c,d,e)
 #     endif /* defined(HAS_LOCALECONV) */
 #     if defined(USE_LOCALE)
+#       define calculate_LC_ALL(a,b)            S_calculate_LC_ALL(aTHX_ a,b)
 #       define get_category_index               S_get_category_index
 #       define get_category_index_nowarn        S_get_category_index_nowarn
+#       define give_perl_locale_control_and_free_arg(a,b) S_give_perl_locale_control_and_free_arg(aTHX_ a,b)
 #       define mortalized_pv_copy(a)            S_mortalized_pv_copy(aTHX_ a)
+#       define native_querylocale(a)            S_native_querylocale(aTHX_ a)
 #       define new_LC_ALL(a,b)                  S_new_LC_ALL(aTHX_ a,b)
 #       define save_to_buffer                   S_save_to_buffer
-#       define setlocale_failure_panic_i(a,b,c,d,e) S_setlocale_failure_panic_i(aTHX_ a,b,c,d,e)
-#       define stdize_locale(a,b,c,d,e)         S_stdize_locale(aTHX_ a,b,c,d,e)
+#       if 0
+#         define stdize_locale(a,b,c,d,e)       S_stdize_locale(aTHX_ a,b,c,d,e)
+#       endif /* 0 */
 #       if defined(DEBUGGING)
 #         define my_setlocale_debug_string_i(a,b,c,d) S_my_setlocale_debug_string_i(aTHX_ a,b,c,d)
 #       endif /* defined(DEBUGGING) */
@@ -1276,13 +1282,9 @@
 #       else /* if !( defined(HAS_NL_LANGINFO) || defined(HAS_NL_LANGINFO_L) ) */
 #         define my_langinfo_i(a,b,c,d,e,f)     S_my_langinfo_i(aTHX_ a,b,c,d,e,f)
 #       endif /* !( defined(HAS_NL_LANGINFO) || defined(HAS_NL_LANGINFO_L) ) */
-#       if ( !defined(LC_ALL) || defined(USE_POSIX_2008_LOCALE) || \
-           defined(WIN32) ) && !( defined(USE_POSIX_2008_LOCALE) && \
-           defined(USE_QUERYLOCALE) )
-#         define calculate_LC_ALL(a)            S_calculate_LC_ALL(aTHX_ a)
-#       endif /* ( !defined(LC_ALL) || defined(USE_POSIX_2008_LOCALE) || \
-                 defined(WIN32) ) && !( defined(USE_POSIX_2008_LOCALE) && \
-                 defined(USE_QUERYLOCALE) ) */
+#       if defined(LC_ALL)
+#         define setlocale_from_aggregate_LC_ALL(a,b) S_setlocale_from_aggregate_LC_ALL(aTHX_ a,b)
+#       endif /* defined(LC_ALL) */
 #       if defined(USE_LOCALE_COLLATE)
 #         define new_collate(a,b)               S_new_collate(aTHX_ a,b)
 #         if defined(DEBUGGING)
@@ -1300,28 +1302,26 @@
 #         define get_LC_ALL_display()           S_get_LC_ALL_display(aTHX)
 #       endif /* defined(USE_PERL_SWITCH_LOCALE_CONTEXT) || \
                  defined(DEBUGGING) */
+#       if defined(USE_PL_CURLOCALES)
+#         define update_PL_curlocales_i(a,b,c)  S_update_PL_curlocales_i(aTHX_ a,b,c)
+#       endif /* defined(USE_PL_CURLOCALES) */
 #       if defined(USE_POSIX_2008_LOCALE)
-#         define emulate_setlocale_i(a,b,c,d)   S_emulate_setlocale_i(aTHX_ a,b,c,d)
-#         define my_querylocale_i(a)            S_my_querylocale_i(aTHX_ a)
-#         define setlocale_from_aggregate_LC_ALL(a,b) S_setlocale_from_aggregate_LC_ALL(aTHX_ a,b)
+#         define bool_setlocale_2008_i(a,b,c,d,e,f) S_bool_setlocale_2008_i(aTHX_ a,b,c,d,e,f)
+#         define querylocale_2008_i(a)          S_querylocale_2008_i(aTHX_ a)
 #         define use_curlocale_scratch()        S_use_curlocale_scratch(aTHX)
-#         if defined(USE_QUERYLOCALE)
-#           define calculate_LC_ALL(a)          S_calculate_LC_ALL(aTHX_ a)
-#         else /* if !defined(USE_QUERYLOCALE) */
-#           define update_PL_curlocales_i(a,b,c) S_update_PL_curlocales_i(aTHX_ a,b,c)
-#         endif /* !defined(USE_QUERYLOCALE) */
-#       elif defined(USE_LOCALE_THREADS) && !defined(USE_THREAD_SAFE_LOCALE) \
-             && !defined(USE_THREAD_SAFE_LOCALE_EMULATION) /* && \
+#       elif defined(USE_THREAD_SAFE_LOCALE_EMULATION) /* && \
              !defined(USE_POSIX_2008_LOCALE) */
+#         define bool_setlocale_emulate_safe_i(a,b,c,d,e,f) S_bool_setlocale_emulate_safe_i(aTHX_ a,b,c,d,e,f)
+#       elif defined(USE_LOCALE_THREADS) && !defined(USE_THREAD_SAFE_LOCALE) \
+             /* && !defined(USE_POSIX_2008_LOCALE) && \
+             !defined(USE_THREAD_SAFE_LOCALE_EMULATION) */
+#         define less_dicey_bool_setlocale_r(a,b,c,d,e,f) S_less_dicey_bool_setlocale_r(aTHX_ a,b,c,d,e,f)
+#         define less_dicey_querylocale_r(a)    S_less_dicey_querylocale_r(aTHX_ a)
 #         define less_dicey_setlocale_r(a,b)    S_less_dicey_setlocale_r(aTHX_ a,b)
-#         define less_dicey_void_setlocale_i(a,b,c) S_less_dicey_void_setlocale_i(aTHX_ a,b,c)
-#         if 0
-#           define less_dicey_bool_setlocale_r(a,b) S_less_dicey_bool_setlocale_r(aTHX_ a,b)
-#         endif /* 0 */
 #       endif /* ( defined(USE_LOCALE_THREADS) && \
-                 !defined(USE_THREAD_SAFE_LOCALE) && \
-                 !defined(USE_THREAD_SAFE_LOCALE_EMULATION) ) && \
-                 !defined(USE_POSIX_2008_LOCALE) */
+                 !defined(USE_THREAD_SAFE_LOCALE) ) && \
+                 !defined(USE_POSIX_2008_LOCALE) && \
+                 !defined(USE_THREAD_SAFE_LOCALE_EMULATION) */
 #       if ( defined(USE_POSIX_2008_LOCALE) && !defined(USE_QUERYLOCALE) ) || \
            defined(WIN32)
 #         define find_locale_from_environment(a) S_find_locale_from_environment(aTHX_ a)
@@ -1334,9 +1334,6 @@
 #         define wrap_wsetlocale(a,b)           S_wrap_wsetlocale(aTHX_ a,b)
 #       endif /* defined(WIN32) */
 #     endif /* defined(USE_LOCALE) */
-#     if defined(USE_POSIX_2008_LOCALE) || defined(DEBUGGING)
-#       define get_displayable_string(a,b,c)    S_get_displayable_string(aTHX_ a,b,c)
-#     endif /* defined(USE_POSIX_2008_LOCALE) || defined(DEBUGGING) */
 #   endif /* defined(PERL_IN_LOCALE_C) */
 #   if defined(PERL_IN_MALLOC_C)
 #     define adjust_size_and_find_bucket        S_adjust_size_and_find_bucket
@@ -2139,6 +2136,11 @@
 #   define PerlIO_unread(a,b,c)                 Perl_PerlIO_unread(aTHX_ a,b,c)
 #   define PerlIO_write(a,b,c)                  Perl_PerlIO_write(aTHX_ a,b,c)
 # endif /* defined(USE_PERLIO) */
+# if defined(USE_THREAD_SAFE_LOCALE_EMULATION)
+#   define category_lock_i(a,b,c)               Perl_category_lock_i(aTHX_ a,b,c)
+#   define category_unlock_i(a,b,c)             Perl_category_unlock_i(aTHX_ a,b,c)
+#   define posix_LC_foo_(a,b)                   Perl_posix_LC_foo_(aTHX_ a,b)
+# endif /* defined(USE_THREAD_SAFE_LOCALE_EMULATION) */
 # if defined(VMS) || defined(WIN32)
 #   define do_aspawn(a,b,c)                     Perl_do_aspawn(aTHX_ a,b,c)
 #   define do_spawn(a)                          Perl_do_spawn(aTHX_ a)

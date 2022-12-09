@@ -15967,10 +15967,21 @@ perl_clone_using(PerlInterpreter *proto_perl, UV flags,
 
     PL_subname		= sv_dup_inc(proto_perl->Isubname, param);
 
+/* We copy the locale state of the current thread to the new one.  The new one
+ * is supposed to start in the C locale (XXX is this inconsistency correct?) but on dangerous systems it is just copied, so as to avoid affecting the parent global state.  This gets much better if emulation is in effect */
+#if defined(USE_LOCALE) && ! defined(USE_THREAD_SAFE_LOCALE)
+    PL_perl_controls_locale = TRUE;
+#endif
 #ifdef USE_PL_CURLOCALES
     for (i = 0; i < (int) C_ARRAY_LENGTH(PL_curlocales); i++) {
         PL_curlocales[i] = SAVEPV("C");
     }
+#  ifdef USE_THREAD_SAFE_LOCALE_EMULATION
+    for (i = 0; i < (int) C_ARRAY_LENGTH(PL_restore_locale); i++) {
+        PL_restore_locale[i] = NULL;
+        PL_restore_locale_depth[i] = 0;
+    }
+#  endif
 #endif
 #ifdef USE_PL_CUR_LC_ALL
     PL_cur_LC_ALL = SAVEPV("C");

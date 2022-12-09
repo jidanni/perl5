@@ -107,6 +107,12 @@ PERLVAR(G, locale_mutex, perl_mutex)   /* Mutex related to locale handling */
 #ifdef USE_POSIX_2008_LOCALE
 PERLVARI(G, C_locale_obj, locale_t, NULL)
 #endif
+#if   defined(USE_LOCALE)                   \
+ &&   defined(LC_ALL)                       \
+ && ! defined LC_ALL_USES_NAME_VALUE_PAIRS  	
+PERLVARA(G, map_LC_ALL_position_to_index, LC_ALL_CATEGORIES_COUNT_, int)
+PERLVARI(G, initted_map_LC_ALL_position_to_index, bool, false)
+#endif
 
 PERLVARI(G, watch_pvx,	char *, NULL)
 

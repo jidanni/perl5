@@ -1088,7 +1088,6 @@ violations are fatal.
  * repeated in t/loc_tools.pl and makedef.pl;  The three should be kept in
  * sync. */
 #if   ! defined(NO_LOCALE)
-
 #  if ! defined(NO_POSIX_2008_LOCALE)           \
    &&   defined(HAS_NEWLOCALE)                  \
    &&   defined(HAS_USELOCALE)                  \
@@ -1114,6 +1113,9 @@ violations are fatal.
 #   define HAS_SKIP_LOCALE_INIT /* Solely for XS code to test for this
                                    #define */
 
+/* XXX The Configure probe for categories must be updated when adding new
+ * categories here */
+
 /* For each locale category on the system that Perl is supposed to pay
  * attention to, create a define giving an index number.  We play some games
  * with the DUMMY defines so that the resulting set of indices of the
@@ -1127,32 +1129,39 @@ violations are fatal.
 #  ifdef LC_CTYPE
 #    ifndef NO_LOCALE_CTYPE
 #      define USE_LOCALE_CTYPE
-#      define LC_CTYPE_INDEX_             0
-#      define PERL_DUMMY_CTYPE_           LC_CTYPE_INDEX_
+#      define LC_CTYPE_INDEX_                 0
+#      define PERL_DUMMY_CTYPE_               LC_CTYPE_INDEX_
+#      define STRLEN_WITH_LC_CTYPE_          (sizeof("LC_CTYPE") - 1)
 #    else
+#      define STRLEN_WITH_LC_CTYPE_           0
 #      undef LC_CTYPE
 #    endif
-#    define LC_ALL_CTYPE_COUNTER_         1
+#    define LC_ALL_CTYPE_COUNTER_             1
 #  else
-#    define LC_ALL_CTYPE_COUNTER_         0
+#    define LC_ALL_CTYPE_COUNTER_             0
 #  endif
 #  ifndef PERL_DUMMY_CTYPE_
-#    define PERL_DUMMY_CTYPE_             -1
+#    define PERL_DUMMY_CTYPE_                -1
+#      define STRLEN_WITH_LC_CTYPE_           0
 #  endif
 #  ifdef LC_NUMERIC
 #    ifndef NO_LOCALE_NUMERIC
 #      define USE_LOCALE_NUMERIC
-#      define LC_NUMERIC_INDEX_           PERL_DUMMY_CTYPE_ + 1
-#      define PERL_DUMMY_NUMERIC_         LC_NUMERIC_INDEX_
+#      define LC_NUMERIC_INDEX_              (PERL_DUMMY_CTYPE_ + 1)
+#      define PERL_DUMMY_NUMERIC_             LC_NUMERIC_INDEX_
+#      define STRLEN_WITH_LC_NUMERIC_      (  sizeof("LC_NUMERIC") - 1      \
+                                            + STRLEN_WITH_LC_CTYPE_)
 #    else
+#      define STRLEN_WITH_LC_NUMERIC_         STRLEN_WITH_LC_CTYPE_
 #      undef LC_NUMERIC
 #    endif
-#    define LC_ALL_NUMERIC_COUNTER_       LC_ALL_CTYPE_COUNTER_ + 1
+#    define LC_ALL_NUMERIC_COUNTER_          (LC_ALL_CTYPE_COUNTER_ + 1)
 #  else
-#    define LC_ALL_NUMERIC_COUNTER_       LC_ALL_CTYPE_COUNTER_
+#    define LC_ALL_NUMERIC_COUNTER_           LC_ALL_CTYPE_COUNTER_
 #  endif
 #  ifndef PERL_DUMMY_NUMERIC_
-#    define PERL_DUMMY_NUMERIC_           PERL_DUMMY_CTYPE_
+#    define PERL_DUMMY_NUMERIC_               PERL_DUMMY_CTYPE_
+#      define STRLEN_WITH_LC_NUMERIC_         STRLEN_WITH_LC_CTYPE_
 #  endif
 #  ifdef LC_COLLATE
         /* Perl outsources all its collation efforts to the libc strxfrm(), so
@@ -1160,173 +1169,238 @@ violations are fatal.
          * gets used */
 #    if ! defined(NO_LOCALE_COLLATE) && defined(HAS_STRXFRM)
 #      define USE_LOCALE_COLLATE
-#      define LC_COLLATE_INDEX_           PERL_DUMMY_NUMERIC_ + 1
-#      define PERL_DUMMY_COLLATE_         LC_COLLATE_INDEX_
+#      define LC_COLLATE_INDEX_              (PERL_DUMMY_NUMERIC_ + 1)
+#      define PERL_DUMMY_COLLATE_             LC_COLLATE_INDEX_
+#      define STRLEN_WITH_LC_COLLATE_      (  sizeof("LC_COLLATE") - 1      \
+                                            + STRLEN_WITH_LC_NUMERIC_)
 #    else
+#      define STRLEN_WITH_LC_COLLATE_         STRLEN_WITH_LC_NUMERIC_
 #      undef LC_COLLATE
 #    endif
-#    define LC_ALL_COLLATE_COUNTER_       LC_ALL_NUMERIC_COUNTER_ + 1
+#    define LC_ALL_COLLATE_COUNTER_          (LC_ALL_NUMERIC_COUNTER_ + 1)
 #  else
-#    define LC_ALL_COLLATE_COUNTER_       LC_ALL_NUMERIC_COUNTER_
+#    define LC_ALL_COLLATE_COUNTER_           LC_ALL_NUMERIC_COUNTER_
 #  endif
 #  ifndef PERL_DUMMY_COLLATE_
-#    define PERL_DUMMY_COLLATE_           PERL_DUMMY_NUMERIC_
+#    define PERL_DUMMY_COLLATE_               PERL_DUMMY_NUMERIC_
+#      define STRLEN_WITH_LC_COLLATE_         STRLEN_WITH_LC_NUMERIC_
 #  endif
 #  ifdef LC_TIME
 #    ifndef NO_LOCALE_TIME
 #      define USE_LOCALE_TIME
-#      define LC_TIME_INDEX_              PERL_DUMMY_COLLATE_ + 1
-#      define PERL_DUMMY_TIME_            LC_TIME_INDEX_
+#      define LC_TIME_INDEX_                  (PERL_DUMMY_COLLATE_ + 1)
+#      define PERL_DUMMY_TIME_                 LC_TIME_INDEX_
+#      define STRLEN_WITH_LC_TIME_          (  sizeof("LC_TIME") - 1        \
+                                             + STRLEN_WITH_LC_COLLATE_)
 #    else
+#      define STRLEN_WITH_LC_TIME_             STRLEN_WITH_LC_COLLATE_
 #      undef LC_TIME
 #    endif
-#    define LC_ALL_TIME_COUNTER_          LC_ALL_COLLATE_COUNTER_ + 1
+#    define LC_ALL_TIME_COUNTER_              (LC_ALL_COLLATE_COUNTER_ + 1)
 #  else
-#    define LC_ALL_TIME_COUNTER_          LC_ALL_COLLATE_COUNTER_
+#    define LC_ALL_TIME_COUNTER_               LC_ALL_COLLATE_COUNTER_
 #  endif
 #  ifndef PERL_DUMMY_TIME_
-#    define PERL_DUMMY_TIME_            PERL_DUMMY_COLLATE_
+#    define PERL_DUMMY_TIME_                   PERL_DUMMY_COLLATE_
+#      define STRLEN_WITH_LC_TIME_             STRLEN_WITH_LC_COLLATE_
 #  endif
 #  ifdef LC_MESSAGES
 #    ifndef NO_LOCALE_MESSAGES
 #      define USE_LOCALE_MESSAGES
-#      define LC_MESSAGES_INDEX_          PERL_DUMMY_TIME_ + 1
-#      define PERL_DUMMY_MESSAGES_        LC_MESSAGES_INDEX_
+#      define LC_MESSAGES_INDEX_              (PERL_DUMMY_TIME_ + 1)
+#      define PERL_DUMMY_MESSAGES_             LC_MESSAGES_INDEX_
+#      define STRLEN_WITH_LC_MESSAGES_      (  sizeof("LC_MESSAGES") - 1    \
+                                             + STRLEN_WITH_LC_TIME_)
 #    else
+#      define STRLEN_WITH_LC_MESSAGES_         STRLEN_WITH_LC_TIME_
 #      undef LC_MESSAGES
 #    endif
-#    define LC_ALL_MESSAGES_COUNTER_      LC_ALL_TIME_COUNTER_ + 1
+#    define LC_ALL_MESSAGES_COUNTER_          (LC_ALL_TIME_COUNTER_ + 1)
 #  else
-#    define LC_ALL_MESSAGES_COUNTER_      LC_ALL_TIME_COUNTER_
+#    define LC_ALL_MESSAGES_COUNTER_           LC_ALL_TIME_COUNTER_
 #  endif
 #  ifndef PERL_DUMMY_MESSAGES_
-#    define PERL_DUMMY_MESSAGES_        PERL_DUMMY_TIME_
+#    define PERL_DUMMY_MESSAGES_               PERL_DUMMY_TIME_
+#      define STRLEN_WITH_LC_MESSAGES_         STRLEN_WITH_LC_TIME_
 #  endif
 #  ifdef LC_MONETARY
 #    ifndef NO_LOCALE_MONETARY
 #      define USE_LOCALE_MONETARY
-#      define LC_MONETARY_INDEX_          PERL_DUMMY_MESSAGES_ + 1
-#      define PERL_DUMMY_MONETARY_        LC_MONETARY_INDEX_
+#      define LC_MONETARY_INDEX_              (PERL_DUMMY_MESSAGES_ + 1)
+#      define PERL_DUMMY_MONETARY_             LC_MONETARY_INDEX_
+#      define STRLEN_WITH_LC_MONETARY_     (   sizeof("LC_MONETARY") - 1    \
+                                             + STRLEN_WITH_LC_MESSAGES_)
 #    else
+#      define STRLEN_WITH_LC_MONETARY_         STRLEN_WITH_LC_MESSAGES_
 #      undef LC_MONETARY
 #    endif
-#    define LC_ALL_MONETARY_COUNTER_      LC_ALL_MESSAGES_COUNTER_ + 1
+#    define LC_ALL_MONETARY_COUNTER_          (LC_ALL_MESSAGES_COUNTER_ + 1)
 #  else
-#    define LC_ALL_MONETARY_COUNTER_      LC_ALL_MESSAGES_COUNTER_
+#    define LC_ALL_MONETARY_COUNTER_           LC_ALL_MESSAGES_COUNTER_
 #  endif
 #  ifndef PERL_DUMMY_MONETARY_
-#    define PERL_DUMMY_MONETARY_          PERL_DUMMY_MESSAGES_
+#    define PERL_DUMMY_MONETARY_               PERL_DUMMY_MESSAGES_
+#      define STRLEN_WITH_LC_MONETARY_         STRLEN_WITH_LC_MESSAGES_
 #  endif
 #  ifdef LC_ADDRESS
 #    ifndef NO_LOCALE_ADDRESS
 #      define USE_LOCALE_ADDRESS
-#      define LC_ADDRESS_INDEX_           PERL_DUMMY_MONETARY_ + 1
-#      define PERL_DUMMY_ADDRESS_         LC_ADDRESS_INDEX_
+#      define LC_ADDRESS_INDEX_               (PERL_DUMMY_MONETARY_ + 1)
+#      define PERL_DUMMY_ADDRESS_              LC_ADDRESS_INDEX_
+#      define STRLEN_WITH_LC_ADDRESS_       (  sizeof("LC_ADDRESS") - 1     \
+                                             + STRLEN_WITH_LC_MONETARY_)
+#    else
+#      define STRLEN_WITH_LC_ADDRESS_          STRLEN_WITH_LC_MONETARY_
 #    endif
-#    define LC_ALL_ADDRESS_COUNTER_       LC_ALL_MONETARY_COUNTER_ + 1
+#    define LC_ALL_ADDRESS_COUNTER_           (LC_ALL_MONETARY_COUNTER_ + 1)
 #  else
-#    define LC_ALL_ADDRESS_COUNTER_       LC_ALL_MONETARY_COUNTER_
+#    define LC_ALL_ADDRESS_COUNTER_            LC_ALL_MONETARY_COUNTER_
 #  endif
 #  ifndef PERL_DUMMY_ADDRESS_
-#    define PERL_DUMMY_ADDRESS_           PERL_DUMMY_MONETARY_
+#    define PERL_DUMMY_ADDRESS_                PERL_DUMMY_MONETARY_
+#      define STRLEN_WITH_LC_ADDRESS_          STRLEN_WITH_LC_MONETARY_
 #  endif
 #  ifdef LC_IDENTIFICATION
 #    ifndef NO_LOCALE_IDENTIFICATION
 #      define USE_LOCALE_IDENTIFICATION
-#      define LC_IDENTIFICATION_INDEX_    PERL_DUMMY_ADDRESS_ + 1
-#      define PERL_DUMMY_IDENTIFICATION_  LC_IDENTIFICATION_INDEX_
+#      define LC_IDENTIFICATION_INDEX_         (PERL_DUMMY_ADDRESS_ + 1)
+#      define PERL_DUMMY_IDENTIFICATION_        LC_IDENTIFICATION_INDEX_
+#      define STRLEN_WITH_LC_IDENTIFICATION_ (  sizeof("LC_IDENTIFICATION") \
+                                              - 1 + STRLEN_WITH_LC_ADDRESS_)
+#    else
+#      define STRLEN_WITH_LC_IDENTIFICATION_    STRLEN_WITH_LC_ADDRESS_
 #    endif
-#    define LC_ALL_IDENTIFICATION_COUNTER_ LC_ALL_ADDRESS_COUNTER_ + 1
+#    define LC_ALL_IDENTIFICATION_COUNTER_     (LC_ALL_ADDRESS_COUNTER_ + 1)
 #  else
-#    define LC_ALL_IDENTIFICATION_COUNTER_ LC_ALL_ADDRESS_COUNTER_
+#    define LC_ALL_IDENTIFICATION_COUNTER_      LC_ALL_ADDRESS_COUNTER_
 #  endif
 #  ifndef PERL_DUMMY_IDENTIFICATION_
-#    define PERL_DUMMY_IDENTIFICATION_    PERL_DUMMY_ADDRESS_
+#    define PERL_DUMMY_IDENTIFICATION_          PERL_DUMMY_ADDRESS_
+#      define STRLEN_WITH_LC_IDENTIFICATION_    STRLEN_WITH_LC_ADDRESS_
 #  endif
 #  ifdef LC_MEASUREMENT
 #    ifndef NO_LOCALE_MEASUREMENT
 #      define USE_LOCALE_MEASUREMENT
-#      define LC_MEASUREMENT_INDEX_       PERL_DUMMY_IDENTIFICATION_ + 1
-#      define PERL_DUMMY_MEASUREMENT_     LC_MEASUREMENT_INDEX_
+#      define LC_MEASUREMENT_INDEX_            (PERL_DUMMY_IDENTIFICATION_ + 1)
+#      define PERL_DUMMY_MEASUREMENT_           LC_MEASUREMENT_INDEX_
+#      define STRLEN_WITH_LC_MEASUREMENT_    (  sizeof("LC_MEASUREMENT") - 1 \
+                                              + STRLEN_WITH_LC_IDENTIFICATION_)
+#    else
+#      define STRLEN_WITH_LC_MEASUREMENT_       STRLEN_WITH_LC_IDENTIFICATION_
 #    endif
-#    define LC_ALL_MEASUREMENT_COUNTER_   LC_ALL_IDENTIFICATION_COUNTER_ + 1
+#    define LC_ALL_MEASUREMENT_COUNTER_      (  LC_ALL_IDENTIFICATION_COUNTER_ \
+                                              + 1)
 #  else
-#    define LC_ALL_MEASUREMENT_COUNTER_   LC_ALL_IDENTIFICATION_COUNTER_
+#    define LC_ALL_MEASUREMENT_COUNTER_         LC_ALL_IDENTIFICATION_COUNTER_
 #  endif
 #  ifndef PERL_DUMMY_MEASUREMENT_
-#    define PERL_DUMMY_MEASUREMENT_       PERL_DUMMY_IDENTIFICATION_
+#    define PERL_DUMMY_MEASUREMENT_             PERL_DUMMY_IDENTIFICATION_
+#      define STRLEN_WITH_LC_MEASUREMENT_       STRLEN_WITH_LC_IDENTIFICATION_
 #  endif
 #  ifdef LC_PAPER
 #    ifndef NO_LOCALE_PAPER
 #      define USE_LOCALE_PAPER
-#      define LC_PAPER_INDEX_             PERL_DUMMY_MEASUREMENT_ + 1
-#      define PERL_DUMMY_PAPER_           LC_PAPER_INDEX_
+#      define LC_PAPER_INDEX_                  (PERL_DUMMY_MEASUREMENT_ + 1)
+#      define PERL_DUMMY_PAPER_                 LC_PAPER_INDEX_
+#      define STRLEN_WITH_LC_PAPER_          (  sizeof("LC_PAPER") - 1      \
+                                              + STRLEN_WITH_LC_MEASUREMENT_)
+#    else
+#      define STRLEN_WITH_LC_PAPER_             STRLEN_WITH_LC_MEASUREMENT_
 #    endif
-#    define LC_ALL_PAPER_COUNTER_         LC_ALL_MEASUREMENT_COUNTER_ + 1
+#    define LC_ALL_PAPER_COUNTER_              (LC_ALL_MEASUREMENT_COUNTER_ + 1)
 #  else
-#    define LC_ALL_PAPER_COUNTER_         LC_ALL_MEASUREMENT_COUNTER_
+#    define LC_ALL_PAPER_COUNTER_               LC_ALL_MEASUREMENT_COUNTER_
 #  endif
 #  ifndef PERL_DUMMY_PAPER_
-#    define PERL_DUMMY_PAPER_             PERL_DUMMY_MEASUREMENT_
+#    define PERL_DUMMY_PAPER_                   PERL_DUMMY_MEASUREMENT_
+#      define STRLEN_WITH_LC_PAPER_             STRLEN_WITH_LC_MEASUREMENT_
 #  endif
 #  ifdef LC_TELEPHONE
 #    ifndef NO_LOCALE_TELEPHONE
 #      define USE_LOCALE_TELEPHONE
-#      define LC_TELEPHONE_INDEX_         PERL_DUMMY_PAPER_ + 1
-#      define PERL_DUMMY_TELEPHONE_       LC_TELEPHONE_INDEX_
+#      define LC_TELEPHONE_INDEX_              (PERL_DUMMY_PAPER_ + 1)
+#      define PERL_DUMMY_TELEPHONE_             LC_TELEPHONE_INDEX_
+#      define STRLEN_WITH_LC_TELEPHONE_      (  sizeof("LC_TELEPHONE") - 1 \
+                                              + STRLEN_WITH_LC_PAPER_)
+#    else
+#      define STRLEN_WITH_LC_TELEPHONE_         STRLEN_WITH_LC_PAPER_
 #    endif
-#    define LC_ALL_TELEPHONE_COUNTER_     LC_ALL_PAPER_COUNTER_ + 1
+#    define LC_ALL_TELEPHONE_COUNTER_          (LC_ALL_PAPER_COUNTER_ + 1)
 #  else
-#    define LC_ALL_TELEPHONE_COUNTER_     LC_ALL_PAPER_COUNTER_
+#    define LC_ALL_TELEPHONE_COUNTER_           LC_ALL_PAPER_COUNTER_
 #  endif
 #  ifndef PERL_DUMMY_TELEPHONE_
-#    define PERL_DUMMY_TELEPHONE_         PERL_DUMMY_PAPER_
+#    define PERL_DUMMY_TELEPHONE_               PERL_DUMMY_PAPER_
+#      define STRLEN_WITH_LC_TELEPHONE_         STRLEN_WITH_LC_PAPER_
 #  endif
 #  ifdef LC_NAME
 #    ifndef NO_LOCALE_NAME
 #      define USE_LOCALE_NAME
-#      define LC_NAME_INDEX_              PERL_DUMMY_TELEPHONE_ + 1
-#      define PERL_DUMMY_NAME_            LC_NAME_INDEX_
+#      define LC_NAME_INDEX_                   (PERL_DUMMY_TELEPHONE_ + 1)
+#      define PERL_DUMMY_NAME_                  LC_NAME_INDEX_
+#      define STRLEN_WITH_LC_NAME_           (  sizeof("LC_NAME") - 1       \
+                                              + STRLEN_WITH_LC_TELEPHONE_)
+#    else
+#      define STRLEN_WITH_LC_NAME_              STRLEN_WITH_LC_TELEPHONE_
 #    endif
-#    define LC_ALL_NAME_COUNTER_          LC_ALL_TELEPHONE_COUNTER_ + 1
+#    define LC_ALL_NAME_COUNTER_               (LC_ALL_TELEPHONE_COUNTER_ + 1)
 #  else
-#    define LC_ALL_NAME_COUNTER_          LC_ALL_TELEPHONE_COUNTER_
+#    define LC_ALL_NAME_COUNTER_                LC_ALL_TELEPHONE_COUNTER_
 #  endif
 #  ifndef PERL_DUMMY_NAME_
-#    define PERL_DUMMY_NAME_              PERL_DUMMY_TELEPHONE_
+#    define PERL_DUMMY_NAME_                    PERL_DUMMY_TELEPHONE_
+#      define STRLEN_WITH_LC_NAME_              STRLEN_WITH_LC_TELEPHONE_
 #  endif
 #  ifdef LC_SYNTAX
 #    ifndef NO_LOCALE_SYNTAX
 #      define USE_LOCALE_SYNTAX
-#      define LC_SYNTAX_INDEX_            PERL_DUMMY_NAME + 1
-#      define PERL_DUMMY_SYNTAX_          LC_SYNTAX_INDEX_
+#      define LC_SYNTAX_INDEX_                 (PERL_DUMMY_NAME + 1)
+#      define PERL_DUMMY_SYNTAX_                LC_SYNTAX_INDEX_
+#      define STRLEN_WITH_LC_SYNTAX          (  sizeof("LC_SYNTAX") - 1     \
+                                              + STRLEN_WITH_LC_NAME_)
+#    else
+#      define STRLEN_WITH_LC_SYNTAX_            STRLEN_WITH_LC_NAME_
 #    endif
-#    define LC_ALL_SYNTAX_COUNTER_        LC_ALL_NAME_COUNTER_ + 1
+#    define LC_ALL_SYNTAX_COUNTER_             (LC_ALL_NAME_COUNTER_ + 1)
 #  else
-#    define LC_ALL_SYNTAX_COUNTER_        LC_ALL_NAME_COUNTER_
+#    define LC_ALL_SYNTAX_COUNTER_              LC_ALL_NAME_COUNTER_
 #  endif
 #  ifndef PERL_DUMMY_SYNTAX_
-#    define PERL_DUMMY_SYNTAX_            PERL_DUMMY_NAME_
+#    define PERL_DUMMY_SYNTAX_                  PERL_DUMMY_NAME_
+#      define STRLEN_WITH_LC_SYNTAX_            STRLEN_WITH_LC_NAME_
 #  endif
 #  ifdef LC_TOD
 #    ifndef NO_LOCALE_TOD
 #      define USE_LOCALE_TOD
-#      define LC_TOD_INDEX_               PERL_DUMMY_SYNTAX_ + 1
-#      define PERL_DUMMY_TOD_             LC_TOD_INDEX_
+#      define LC_TOD_INDEX_                    (PERL_DUMMY_SYNTAX_ + 1)
+#      define PERL_DUMMY_TOD_                   LC_TOD_INDEX_
+#      define STRLEN_WITH_LC_TO_             (  sizeof("LC_TOD") - 1        \
+                                              + STRLEN_WITH_LC_SYNTAX_)
+#    else
+#      define STRLEN_WITH_LC_TOD_               STRLEN_WITH_LC_SYNTAX_
 #    endif
-#    define LC_ALL_TOD_COUNTER_           LC_ALL_SYNTAX_COUNTER_ + 1
+#    define LC_ALL_TOD_COUNTER_                (LC_ALL_SYNTAX_COUNTER_ + 1)
 #  else
-#    define LC_ALL_TOD_COUNTER_           LC_ALL_SYNTAX_COUNTER_
+#    define LC_ALL_TOD_COUNTER_                 LC_ALL_SYNTAX_COUNTER_
 #  endif
 #  ifndef PERL_DUMMY_TOD_
-#    define PERL_DUMMY_TOD_               PERL_DUMMY_SYNTAX_
+#    define PERL_DUMMY_TOD_                     PERL_DUMMY_SYNTAX_
+#      define STRLEN_WITH_LC_TOD_               STRLEN_WITH_LC_SYNTAX_
 #  endif
-#  define PERL_LOCALE_CATEGORIES_COUNT_   PERL_DUMMY_TOD_ + 1
-#  define LC_ALL_CATEGORIES_COUNT_        LC_ALL_TOD_COUNTER_
+#  define PERL_LOCALE_CATEGORIES_COUNT_        (PERL_DUMMY_TOD_ + 1)
+#  define LC_ALL_CATEGORIES_COUNT_              LC_ALL_TOD_COUNTER_
 #  ifdef LC_ALL
-#    define LC_ALL_INDEX_                 PERL_LOCALE_CATEGORIES_COUNT_
+#    define LC_ALL_INDEX_                       PERL_LOCALE_CATEGORIES_COUNT_
+#    define PERL_LOCALE_CATEGORIES_PLUS_LC_ALL_COUNT_                       \
+                                        (PERL_LOCALE_CATEGORIES_COUNT_ + 1)
+#  else
+#    define PERL_LOCALE_CATEGORIES_PLUS_LC_ALL_COUNT_                       \
+                                         PERL_LOCALE_CATEGORIES_COUNT_
 #  endif
-#  define PERL_LOCALE_CATEGORIES_ALL_COUNT_  PERL_LOCALE_CATEGORIES_COUNT_ + 1
+#  if (PERL_LOCALE_CATEGORIES_COUNT_ != LC_ALL_CATEGORIES_COUNT_)
+#    define HAS_IGNORED_LOCALE_CATEGORIES
+#  endif
+#  define PERL_CATEGORIES_STRLEN_            STRLEN_WITH_LC_TOD_
 
 /* =========================================================================
  * The defines from here to the following ===== line are unfortunately
@@ -1349,11 +1423,14 @@ violations are fatal.
 
    /* On threaded builds, use thread-safe locales if they are available and not
     * forbidden.  Availability is when we are using POSIX 2008 locales, or
-    * Windows for quite a few releases now. */
+    * Windows for any vintage recent enough to have _MSC_VER defined */
 #  if defined(USE_LOCALE_THREADS) && ! defined(NO_THREAD_SAFE_LOCALE)
 #    if  defined(USE_POSIX_2008_LOCALE)                                     \
-     || (defined(WIN32) && defined(_MSC_VER))
+     || (defined(WIN32) && (defined(_MSC_VER) || defined(UCRT_USED)))
 #      define USE_THREAD_SAFE_LOCALE
+#    else
+#      define USE_THREAD_SAFE_LOCALE_EMULATION
+#      undef USE_POSIX_2008_LOCALE
 #    endif
 #  endif
 
@@ -1382,7 +1459,8 @@ violations are fatal.
 
    /* POSIX 2008 has no means of finding out the current locale without a
     * querylocale; so must keep track of it ourselves */
-#  if (defined(USE_POSIX_2008_LOCALE) && ! defined(USE_QUERYLOCALE))
+#  if (defined(USE_POSIX_2008_LOCALE) && ! defined(USE_QUERYLOCALE))        \
+   ||  defined(USE_THREAD_SAFE_LOCALE_EMULATION)
 #    define USE_PL_CURLOCALES
 #  endif
 
@@ -1392,13 +1470,17 @@ violations are fatal.
     * thinks LC_ALL is so as to inform the Windows libc when switching
     * contexts. */
 #    define USE_PL_CUR_LC_ALL
+#  endif
 
    /* Microsoft documentation reads in the change log for VS 2015: "The
     * localeconv function declared in locale.h now works correctly when
     * per-thread locale is enabled. In previous versions of the library, this
     * function would return the lconv data for the global locale, not the
     * thread's locale." */
-#    if _MSC_VER < 1900
+#  if defined(WIN32)
+#    if ! defined(_MSC_VER) && ! defined(UCRT_USED)
+#      define TS_W32_BROKEN_LOCALECONV
+#    elif _MSC_VER < 1900
 #      define TS_W32_BROKEN_LOCALECONV
 #    endif
 #  endif
@@ -1415,6 +1497,20 @@ violations are fatal.
 
 /* end of makedef.pl logic duplication
  * ========================================================================= */
+
+#define DEBUG_SETLOCALE_INCONSISTENCIES
+#ifdef DEBUG_SETLOCALE_INCONSISTENCIES
+#  if ! defined(DEBUGGING) || defined(USE_POSIX_2008) || ! defined(USE_LOCALE_CTYPE)
+#    undef DEBUG_SETLOCALE_INCONSISTENCIES
+#  endif
+#endif
+#ifdef DEBUG_SETLOCALE_INCONSISTENCIES
+#  define PERL_ASSERT_CATEGORY_EQ_CTYPE(cat)                                \
+            assert(strEQ(setlocale(cat, NULL), setlocale(LC_CTYPE, NULL)))
+    //XXX
+#else
+#  define PERL_ASSERT_CATEGORY_EQ_CTYPE(cat)  NOOP
+#endif
 
 #ifdef PERL_CORE
 
@@ -1442,6 +1538,11 @@ typedef struct {
     size_t offset;
 } lconv_offset_t;
 
+typedef enum {  /* Like the Perl language 'wantarray' */
+    WANT_VOID,
+    WANT_BOOL,
+    WANT_LOCALE
+} setlocale_returns;
 
 #endif
 
@@ -2368,7 +2469,7 @@ my_snprintf()
 #define my_sprintf sprintf
 
 /*
- * If we have v?snprintf() and the C99 variadic macros, we can just
+ * If XXX we have v?snprintf() and the C99 variadic macros, we can just
  * use just the v?snprintf().  It is nice to try to trap the buffer
  * overflow, however, so if we are DEBUGGING, and we cannot use the
  * gcc statement expressions, then use the function wrappers which try
@@ -5030,15 +5131,15 @@ Gid_t getegid (void);
  * #define DEBUG_POST_STMTS  RESTORE_ERRNO;
  *
  * Other potential things include displaying timestamps, location information,
- * which thread, etc.  Heres an example with both errno and location info:
+ * which thread, etc.  Here's an example with both errno and location info:
  *
  * #define DEBUG_PRE_STMTS   dSAVE_ERRNO;  \
  *              PerlIO_printf(Perl_debug_log, "%s:%d: ", __FILE__, __LINE__);
  * #define DEBUG_POST  RESTORE_ERRNO;
  *
- * All DEBUG statements in the compiled scope will be have these extra
- * statements compiled in; they will be executed only for the DEBUG statements
- * whose flags are turned on.
+ * All DEBUG statements in the compiled scope will have these extra statements
+ * compiled in; they will be executed only for the DEBUG statements whose flags
+ * are turned on.
  */
 #ifndef DEBUG_PRE_STMTS
 #  define DEBUG_PRE_STMTS
@@ -6293,6 +6394,7 @@ END_EXTERN_C
    define HAVE_INTERP_INTERN  */
 #include "embed.h"
 
+/* Maybe a porting test to make sure G isn't an SV, unless PL_placeholder */
 START_EXTERN_C
 
 #  include "perlvars.h"
@@ -7141,7 +7243,8 @@ the plain locale pragma without a parameter (S<C<use locale>>) is in effect.
 #  define _CHECK_AND_OUTPUT_WIDE_LOCALE_CP_MSG(c)
 #endif
 
-#define locale_panic_(m)  Perl_locale_panic((m), __FILE__, __LINE__, errno)
+#define locale_panic_via_(m, f, l)  Perl_locale_panic((m), __LINE__, f, l)
+#define locale_panic_(m)  locale_panic_via_((m), __FILE__, __LINE__)
 
 /* Locale/thread synchronization macros. */
 #if ! defined(USE_LOCALE_THREADS)
@@ -7248,11 +7351,16 @@ the plain locale pragma without a parameter (S<C<use locale>>) is in effect.
                         }                                                   \
                     } STMT_END
 #  endif
-
+#  ifdef USE_THREAD_SAFE_LOCALE_EMULATION
+#      define LOCALE_TERM_THREAD_SAFE_LOCALE_EMULATION_  NOOP
+#  else
+#    define LOCALE_TERM_THREAD_SAFE_LOCALE_EMULATION_  NOOP
+#  endif
 #  define LOCALE_INIT           MUTEX_INIT(&PL_locale_mutex)
-#  define LOCALE_TERM           STMT_START {                                \
-                                    LOCALE_TERM_POSIX_2008_;                \
-                                    MUTEX_DESTROY(&PL_locale_mutex);        \
+#  define LOCALE_TERM           STMT_START {                                  \
+                                    LOCALE_TERM_POSIX_2008_;                  \
+                                    LOCALE_TERM_THREAD_SAFE_LOCALE_EMULATION_;\
+                                    MUTEX_DESTROY(&PL_locale_mutex);          \
                                 } STMT_END
 #endif
 
@@ -7334,7 +7442,6 @@ the plain locale pragma without a parameter (S<C<use locale>>) is in effect.
 #  define SETLOCALE_UNLOCK              NOOP
 #endif
 
-
       /* On systems that don't have per-thread locales, even though we don't
        * think we are changing the locale ourselves, behind the scenes it does
        * get changed to whatever the thread's should be, so it has to be an
@@ -7344,19 +7451,73 @@ the plain locale pragma without a parameter (S<C<use locale>>) is in effect.
 #define LOCALE_READ_LOCK                SETLOCALE_LOCK
 #define LOCALE_READ_UNLOCK              SETLOCALE_UNLOCK
 
+#ifdef USE_THREAD_SAFE_LOCALE_EMULATION
 
-#ifndef LC_NUMERIC_LOCK
-#  define LC_NUMERIC_LOCK(cond)   NOOP
-#  define LC_NUMERIC_UNLOCK       NOOP
+/* The macros for the individual categories are defined in terms of
+* these XXX two */
+#  define LC_CATEGORY_LOCK_i_(i)      category_lock_i(i, __FILE__, __LINE__)
+#  define LC_CATEGORY_UNLOCK_i_(i)    category_unlock_i(i, __FILE__, __LINE__)
+#  define LC_CATEGORY_LOCK_c_(cat)    LC_CATEGORY_LOCK_i_(cat##_INDEX_)
+#  define LC_CATEGORY_UNLOCK_c_(cat)  LC_CATEGORY_UNLOCK_i_(cat##_INDEX_)
+
+#  ifdef USE_LOCALE_COLLATE
+#    define LC_COLLATE_LOCK             LC_CATEGORY_LOCK_c_(LC_COLLATE)
+#    define LC_COLLATE_UNLOCK           LC_CATEGORY_UNLOCK_c_(LC_COLLATE)
+#  endif
+#  ifdef USE_LOCALE_CTYPE
+#    define LC_CTYPE_LOCK               LC_CATEGORY_LOCK_c_(LC_CTYPE)
+#    define LC_CTYPE_UNLOCK             LC_CATEGORY_UNLOCK_c_(LC_CTYPE)
+#  endif
+#  ifdef USE_LOCALE_MESSAGES
+#    define LC_MESSAGES_LOCK            LC_CATEGORY_LOCK_c_(LC_MESSAGES)
+#    define LC_MESSAGES_UNLOCK          LC_CATEGORY_UNLOCK_c_(LC_MESSAGES)
+#  endif
+#  ifdef USE_LOCALE_MONETARY
+#    define LC_MONETARY_LOCK            LC_CATEGORY_LOCK_c_(LC_MONETARY)
+#    define LC_MONETARY_UNLOCK          LC_CATEGORY_UNLOCK_c_(LC_MONETARY)
+#  endif
+#  ifdef USE_LOCALE_NUMERIC
+
+     /* This is the one category we may already have defined.  It needs to be
+      * overwritten.  We ignore the parameter in this case, since in this
+      * thread-safe emulation, all the threads are jumbled together */
+#    undef LC_NUMERIC_LOCK
+#    define LC_NUMERIC_LOCK(cond_to_panic_if_already_locked)                \
+                                        LC_CATEGORY_LOCK_c_(LC_NUMERIC)
+#    undef LC_NUMERIC_UNLOCK
+#    define LC_NUMERIC_UNLOCK           LC_CATEGORY_UNLOCK_c_(LC_NUMERIC)
+#  endif
+#  ifdef USE_LOCALE_TIME
+#    define LC_TIME_LOCK                LC_CATEGORY_LOCK_c_(LC_TIME)
+#    define LC_TIME_UNLOCK              LC_CATEGORY_UNLOCK_c_(LC_TIME)
+#  endif
 #endif
+
+/* Below are lock definitions for individual functions that Perl uses.  All
+ * such need to be in terms of the locale category(ies) that affect them, plus
+ * gwLOCALE_LOCK if they read/write global space.  It is best to create a
+ * definition for each function to hide those details, and allow it to be more
+ * easily maintained. */
+#ifdef LC_CTYPE_LOCK
+#    define MBLEN_LOCK_                 LC_CTYPE_LOCK
+#    define MBLEN_UNLOCK_               LC_CTYPE_UNLOCK
+#    define MBRLEN_LOCK_                LC_CTYPE_LOCK
+#    define MBRLEN_UNLOCK_              LC_CTYPE_UNLOCK
+#    define MBTOWC_LOCK_                LC_CTYPE_LOCK
+#    define MBTOWC_UNLOCK_              LC_CTYPE_UNLOCK
+#    define MBRTOWC_LOCK_               LC_CTYPE_LOCK
+#    define MBRTOWC_UNLOCK_             LC_CTYPE_UNLOCK
+#    define WCTOMB_LOCK_                LC_CTYPE_LOCK
+#    define WCTOMB_UNLOCK_              LC_CTYPE_UNLOCK
+#    define WCRTOMB_LOCK_               LC_CTYPE_LOCK
+#    define WCRTOMB_UNLOCK_             LC_CTYPE_UNLOCK
+#else
 
    /* These non-reentrant versions use global space */
 #  define MBLEN_LOCK_                gwLOCALE_LOCK
 #  define MBLEN_UNLOCK_              gwLOCALE_UNLOCK
-
 #  define MBTOWC_LOCK_               gwLOCALE_LOCK
 #  define MBTOWC_UNLOCK_             gwLOCALE_UNLOCK
-
 #  define WCTOMB_LOCK_               gwLOCALE_LOCK
 #  define WCTOMB_UNLOCK_             gwLOCALE_UNLOCK
 
@@ -7370,13 +7531,47 @@ the plain locale pragma without a parameter (S<C<use locale>>) is in effect.
 #  define WCRTOMB_LOCK_                 NOOP
 #  define WCRTOMB_UNLOCK_               NOOP
 
+#  define LC_CTYPE_LOCK                 SETLOCALE_LOCK
+#  define LC_CTYPE_UNLOCK               SETLOCALE_UNLOCK
+#endif
+
+#if ! defined(LC_COLLATE_LOCK)
 #  define LC_COLLATE_LOCK               SETLOCALE_LOCK
 #  define LC_COLLATE_UNLOCK             SETLOCALE_UNLOCK
+#endif
 
+#if ! defined(LC_MESSAGES_LOCK)
+#  define LC_MESSAGES_LOCK              SETLOCALE_LOCK
+#  define LC_MESSAGES_UNLOCK            SETLOCALE_UNLOCK
+#endif
+
+#if ! defined(LC_MONETARY_LOCK)
+#  define LC_MONETARY_LOCK              SETLOCALE_LOCK
+#  define LC_MONETARY_UNLOCK            SETLOCALE_UNLOCK
+#endif
+
+#ifdef LC_TIME_LOCK
+#  define STRFTIME_LOCK  /* Needs one exclusive lock */                     \
+            STMT_START { LC_CTYPE_LOCK; LC_TIME_LOCK; ENV_READ_LOCK;        \
+                         PERL_ASSERT_CATEGORY_EQ_CTYPE(LC_TIME);            \
+                       } STMT_END
+#  define STRFTIME_UNLOCK                                                   \
+            STMT_START { ENV_READ_UNLOCK; LC_TIME_UNLOCK; LC_CTYPE_UNLOCK;  \
+                       } STMT_END
+#else
 #  define STRFTIME_LOCK                 ENV_LOCK
 #  define STRFTIME_UNLOCK               ENV_UNLOCK
 
+#  define LC_TIME_LOCK                  SETLOCALE_LOCK
+#  define LC_TIME_UNLOCK                SETLOCALE_UNLOCK
+#endif
+
 #ifdef USE_LOCALE_NUMERIC
+#  ifndef LC_NUMERIC_LOCK
+#    define LC_NUMERIC_LOCK(cond_to_panic_if_already_locked)            \
+               LOCALE_LOCK_(cond_to_panic_if_already_locked)
+#    define LC_NUMERIC_UNLOCK  LOCALE_UNLOCK_
+#  endif
 
 /* These macros are for toggling between the underlying locale (UNDERLYING or
  * LOCAL) and the C locale (STANDARD).  (Actually we don't have to use the C
@@ -7541,7 +7736,8 @@ cannot have changed since the precalculation.
                     (! PL_numeric_underlying && PL_numeric_standard < 2)
 
 #  define DECLARATION_FOR_LC_NUMERIC_MANIPULATION                           \
-    void (*_restore_LC_NUMERIC_function)(pTHX) = NULL
+    void (*_restore_LC_NUMERIC_function)(pTHX_ const char * const file,     \
+                                               const line_t line) = NULL
 
 #  define STORE_LC_NUMERIC_SET_TO_NEEDED_IN(in)                             \
         STMT_START {                                                        \
@@ -7551,14 +7747,14 @@ cannot have changed since the precalculation.
                      || (! _in_lc_numeric && NOT_IN_NUMERIC_STANDARD_)));   \
             if (_in_lc_numeric) {                                           \
                 if (NOT_IN_NUMERIC_UNDERLYING_) {                           \
-                    Perl_set_numeric_underlying(aTHX);                      \
+                    Perl_set_numeric_underlying(aTHX_ __FILE__, __LINE__);  \
                     _restore_LC_NUMERIC_function                            \
                                             = &Perl_set_numeric_standard;   \
                 }                                                           \
             }                                                               \
             else {                                                          \
                 if (NOT_IN_NUMERIC_STANDARD_) {                             \
-                    Perl_set_numeric_standard(aTHX);                        \
+                    Perl_set_numeric_standard(aTHX_ __FILE__, __LINE__);    \
                     _restore_LC_NUMERIC_function                            \
                                             = &Perl_set_numeric_underlying; \
                 }                                                           \
@@ -7571,7 +7767,7 @@ cannot have changed since the precalculation.
 #  define RESTORE_LC_NUMERIC()                                              \
         STMT_START {                                                        \
             if (_restore_LC_NUMERIC_function) {                             \
-                _restore_LC_NUMERIC_function(aTHX);                         \
+                _restore_LC_NUMERIC_function(aTHX_ __FILE__, __LINE__);     \
             }                                                               \
             LC_NUMERIC_UNLOCK;                                              \
         } STMT_END
@@ -7585,7 +7781,7 @@ cannot have changed since the precalculation.
                                "%s: %d: lc_numeric standard=%d\n",          \
                                 __FILE__, __LINE__, PL_numeric_standard));  \
             if (UNLIKELY(NOT_IN_NUMERIC_STANDARD_)) {                       \
-                Perl_set_numeric_standard(aTHX);                            \
+                Perl_set_numeric_standard(aTHX_ __FILE__, __LINE__);        \
             }                                                               \
             DEBUG_Lv(PerlIO_printf(Perl_debug_log,                          \
                                  "%s: %d: lc_numeric standard=%d\n",        \
@@ -7596,7 +7792,7 @@ cannot have changed since the precalculation.
 	STMT_START {                                                        \
           /*assert(PL_locale_mutex_depth > 0);*/                            \
             if (NOT_IN_NUMERIC_UNDERLYING_) {                               \
-                Perl_set_numeric_underlying(aTHX);                          \
+                Perl_set_numeric_underlying(aTHX_ __FILE__, __LINE__);      \
             }                                                               \
         } STMT_END
 
@@ -7607,7 +7803,7 @@ cannot have changed since the precalculation.
             LC_NUMERIC_LOCK(NOT_IN_NUMERIC_STANDARD_);                      \
             if (NOT_IN_NUMERIC_STANDARD_) {                                 \
                 _restore_LC_NUMERIC_function = &Perl_set_numeric_underlying;\
-                Perl_set_numeric_standard(aTHX);                            \
+                Perl_set_numeric_standard(aTHX_ __FILE__, __LINE__);        \
             }                                                               \
         } STMT_END
 
@@ -7617,7 +7813,7 @@ cannot have changed since the precalculation.
 	STMT_START {                                                        \
             LC_NUMERIC_LOCK(NOT_IN_NUMERIC_UNDERLYING_);                    \
             if (NOT_IN_NUMERIC_UNDERLYING_) {                               \
-                Perl_set_numeric_underlying(aTHX);                          \
+                Perl_set_numeric_underlying(aTHX_ __FILE__, __LINE__);      \
                 _restore_LC_NUMERIC_function = &Perl_set_numeric_standard;  \
             }                                                               \
         } STMT_END
@@ -7681,6 +7877,11 @@ cannot have changed since the precalculation.
     STMT_START { block; } STMT_END
 
 #endif /* !USE_LOCALE_NUMERIC */
+
+#ifndef LC_NUMERIC_LOCK
+#  define LC_NUMERIC_LOCK(cond)     NOOP
+#  define LC_NUMERIC_UNLOCK         NOOP
+#endif
 
 #ifdef USE_LOCALE_THREADS
 #  define ENV_LOCK            PERL_WRITE_LOCK(&PL_env_mutex)

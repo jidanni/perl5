@@ -775,6 +775,39 @@ Perl_emulate_cop_io(pTHX_ const COP *const c, SV *const sv)
     }
 }
 
+int
+Perl_get_extended_os_errnum(void)
+{
+
+#if defined(VMS)
+
+    return (int) vaxc$errno;
+
+#elif defined(OS2)
+
+    if (! (_emx_env & 0x200)) {	/* Under DOS */
+        return (int) errno;
+    }
+
+    if (errno != errno_isOS2) {
+        const int tmp = _syserrno();
+        if (tmp)	/* 2nd call to _syserrno() makes it 0 */
+            Perl_rc = tmp;
+    }
+    return (int) Perl_rc;
+
+#elif defined(WIN32)
+
+    return (int) GetLastError();
+
+#else
+
+    return (int) errno;
+
+#endif
+
+}
+
 STATIC void
 S_fixup_errno_string(pTHX_ SV* sv)
 {
@@ -900,21 +933,27 @@ Perl_magic_get(pTHX_ SV *sv, MAGIC *mg)
             break;
         }
 
+
 #if defined(VMS) || defined(OS2) || defined(WIN32)
+
+    int errnum = get_extended_os_errnum();
+
 #   if defined(VMS)
         {
             char msg[255];
             $DESCRIPTOR(msgdsc,msg);
-            sv_setnv(sv,(NV) vaxc$errno);
-            if (sys$getmsg(vaxc$errno,&msgdsc.dsc$w_length,&msgdsc,0,0) & 1)
+        
+            sv_setnv(sv, (NV) errnum);
+            if (sys$getmsg(errnum, &msgdsc.dsc$w_length,&msgdsc,0,0) & 1)
                 sv_setpvn(sv,msgdsc.dsc$a_pointer,msgdsc.dsc$w_length);
             else
                 SvPVCLEAR(sv);
         }
+
 #elif defined(OS2)
         if (!(_emx_env & 0x200)) {	/* Under DOS */
-            sv_setnv(sv, (NV)errno);
-            if (errno) {
+            sv_setnv(sv, (NV) errnum);
+            if (errnum) {
                 utf8ness_t utf8ness;
                 const char * errstr = my_strerror(errnum, &utf8ness);
 
@@ -928,21 +967,17 @@ Perl_magic_get(pTHX_ SV *sv, MAGIC *mg)
                 SvPVCLEAR(sv);
             }
         } else {
-            if (errno != errno_isOS2) {
-                const int tmp = _syserrno();
-                if (tmp)	/* 2nd call to _syserrno() makes it 0 */
-                    Perl_rc = tmp;
-            }
-            sv_setnv(sv, (NV)Perl_rc);
-            sv_setpv(sv, os2error(Perl_rc));
+            sv_setnv(sv, (NV) errnum);
+            sv_setpv(sv, os2error(errnum));
         }
         if (SvOK(sv) && strNE(SvPVX(sv), "")) {
             fixup_errno_string(sv);
         }
+
 #   elif defined(WIN32)
         {
-            const DWORD dwErr = GetLastError();
-            sv_setnv(sv, (NV)dwErr);
+            const DWORD dwErr = (DWORD) errnum;
+            sv_setnv(sv, (NV) dwErr);
             if (dwErr) {
                 PerlProc_GetOSError(sv, dwErr);
                 fixup_errno_string(sv);
@@ -1052,12 +1087,11 @@ Perl_magic_get(pTHX_ SV *sv, MAGIC *mg)
         else if (strEQ(remaining, "AFE_LOCALES")) {
 
 #if ! defined(USE_ITHREADS) || defined(USE_THREAD_SAFE_LOCALE)
-
             sv_setuv(sv, (UV) 1);
-
+#elif defined(USE_THREAD_SAFE_LOCALE_EMULATION)
+            sv_setuv(sv, (UV) 2);
 #else
             sv_setuv(sv, (UV) 0);
-
 #endif
 
         }

@@ -2958,6 +2958,7 @@ PP(pp_stat)
             */
 #    if defined(I_INTTYPES) && defined(HAS_SNPRINTF)
 #      if ST_DEV_SIGN < 0
+            /*XXX not defined, ? need lock */
             int size = snprintf(buf, sizeof(buf), "%" PRIdMAX, (intmax_t)PL_statcache.st_dev);
 #      else
             int size = snprintf(buf, sizeof(buf), "%" PRIuMAX, (uintmax_t)PL_statcache.st_dev);

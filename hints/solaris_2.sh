@@ -721,4 +721,4 @@ esac
 useshrplib='true'
 
 # Solaris isn't currently thread safe.  races occurred
-d_newlocale=undef
+#d_newlocale=undef

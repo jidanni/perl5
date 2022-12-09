@@ -1340,6 +1340,8 @@ p	|void	|init_argv_symbols					\
 : Used in pp_ctl.c
 po	|void	|init_dbargs
 : Used in mg.c
+
+pT	|int	|get_extended_os_errnum
 p	|void	|init_debugger
 Cp	|void	|init_stacks
 Cp	|void	|init_tm	|NN struct tm *ptm
@@ -2188,10 +2190,10 @@ Apd	|CV *	|get_cvn_flags	|NN const char *name			\
 				|STRLEN len				\
 				|I32 flags
 Tp	|void	|force_locale_unlock
-CTpor	|void	|locale_panic	|NN const char *msg			\
-				|NN const char *file_name		\
-				|const line_t line			\
-				|const int errnum
+CTpor	|void	|locale_panic	|NN const char *msg				\
+				|const line_t immediate_caller_line		\
+				|NN const char * const higher_caller_file	\
+				|const line_t higher_caller_line
 ATdo	|const char *|Perl_setlocale					\
 				|const int category			\
 				|NULLOK const char *locale
@@ -2204,8 +2206,12 @@ p	|const char *|my_strerror					\
 				|const int errnum			\
 				|NN utf8ness_t *utf8ness
 XpT	|void	|_warn_problematic_locale
-Xp	|void	|set_numeric_underlying
-Xp	|void	|set_numeric_standard
+Xp	|void	|set_numeric_underlying 				\
+				|NN const char * const file		\
+				|const line_t line
+Xp	|void	|set_numeric_standard					\
+				|NN const char * const file		\
+				|const line_t line
 Cp	|bool	|_is_in_locale_category 				\
 				|const bool compiling			\
 				|const int category
@@ -4258,6 +4264,10 @@ S	|utf8ness_t|get_locale_string_utf8ness_i			\
 				|NULLOK const char *locale		\
 				|const unsigned cat_index
 S	|bool	|is_locale_utf8 |NN const char *locale
+S	|const char *|get_displayable_string				\
+				|NN const char * const s		\
+				|NN const char * const e		\
+				|const bool is_utf8
 # if defined(HAS_LOCALECONV)
 S	|HV *	|my_localeconv	|const int item
 S	|void	|populate_hash_from_localeconv				\
@@ -4279,20 +4289,21 @@ ST	|unsigned int|get_category_index				\
 				|NULLOK const char *locale
 ST	|int	|get_category_index_nowarn				\
 				|const int category
+S	|void	|give_perl_locale_control_and_free_arg			\
+				|NULLOK const char **list		\
+				|const line_t caller_line
+S	|const char *|native_querylocale				\
+				|const unsigned int cat_index
 S	|void	|new_LC_ALL	|NULLOK const char *unused		\
 				|bool force
-S	|const char *|stdize_locale					\
-				|const int category			\
-				|NULLOK const char *input_locale	\
-				|NULLOK const char **buf		\
-				|NULLOK Size_t *buf_size		\
-				|const line_t caller_line
-Sr	|void	|setlocale_failure_panic_i				\
-				|const unsigned int cat_index		\
-				|NULLOK const char *current		\
-				|NN const char *failed			\
-				|const line_t caller_0_line		\
-				|const line_t caller_1_line
+Sor	|void	|setlocale_failure_panic_i					\
+				|const unsigned int cat_index			\
+				|NULLOK const char *current			\
+				|NN const char *failed				\
+				|const line_t proxy_caller_line 		\
+				|const line_t immediate_caller_line		\
+				|NN const char * const higher_caller_file	\
+				|const line_t higher_caller_line
 So	|const char *|toggle_locale_i					\
 				|const unsigned switch_cat_index	\
 				|NN const char *new_locale		\
@@ -4301,6 +4312,17 @@ So	|void	|restore_toggled_locale_i				\
 				|const unsigned cat_index		\
 				|NULLOK const char *original_locale	\
 				|const line_t caller_line
+S	|const char *|calculate_LC_ALL						\
+				|NULLOK const char **category_locales_list	\
+				|const bool format
+#   if 0
+S	|const char *|stdize_locale					\
+				|const int category			\
+				|NULLOK const char *input_locale	\
+				|NULLOK const char **buf		\
+				|NULLOK Size_t *buf_size		\
+				|const line_t caller_line
+#   endif /* 0 */
 #   if defined(DEBUGGING)
 SR	|char * |my_setlocale_debug_string_i				\
 				|const unsigned cat_index		\
@@ -4325,6 +4347,11 @@ S	|const char *|my_langinfo_i					\
 				|NULLOK Size_t *retbuf_sizep		\
 				|NULLOK utf8ness_t *utf8ness
 #   endif /* !( defined(HAS_NL_LANGINFO) || defined(HAS_NL_LANGINFO_L) ) */
+#   if defined(LC_ALL)
+S	|bool	|setlocale_from_aggregate_LC_ALL			\
+				|NN const char *locale			\
+				|const line_t line
+#   endif /* defined(LC_ALL) */
 #   if defined(USE_LOCALE_COLLATE)
 S	|void	|new_collate	|NN const char *newcoll 		\
 				|bool force
@@ -4350,55 +4377,52 @@ S	|void	|new_numeric	|NN const char *newnum			\
 #   if defined(USE_PERL_SWITCH_LOCALE_CONTEXT) || defined(DEBUGGING)
 S	|const char *|get_LC_ALL_display
 #   endif /* defined(USE_PERL_SWITCH_LOCALE_CONTEXT) || defined(DEBUGGING) */
-#   if defined(USE_POSIX_2008_LOCALE)
-S	|const char *|emulate_setlocale_i				\
-				|const unsigned int index		\
-				|NULLOK const char *new_locale		\
-				|const recalc_lc_all_t recalc_LC_ALL	\
-				|const line_t line
-S	|const char *|my_querylocale_i					\
-				|const unsigned int index
-S	|locale_t|use_curlocale_scratch
-S	|const char *|setlocale_from_aggregate_LC_ALL			\
-				|NN const char *locale			\
-				|const line_t line
-#     if defined(USE_QUERYLOCALE)
-S	|const char *|calculate_LC_ALL					\
-				|const locale_t cur_obj
-#     else /* if !defined(USE_QUERYLOCALE) */
+#   if defined(USE_PL_CURLOCALES)
 S	|const char *|update_PL_curlocales_i				\
 				|const unsigned int index		\
 				|NN const char *new_locale		\
 				|recalc_lc_all_t recalc_LC_ALL
-#     endif /* !defined(USE_QUERYLOCALE) */
-#   elif defined(USE_LOCALE_THREADS) && !defined(USE_THREAD_SAFE_LOCALE) && \
-         !defined(USE_THREAD_SAFE_LOCALE_EMULATION) /* && \
+#   endif /* defined(USE_PL_CURLOCALES) */
+#   if defined(USE_POSIX_2008_LOCALE)
+S	|bool	|bool_setlocale_2008_i					\
+				|const unsigned int index		\
+				|NN const char *new_locale		\
+				|const setlocale_returns ret_type	\
+				|const line_t immediate_caller_line	\
+				|NN const char *higher_caller_file	\
+				|const line_t higher_caller_line
+S	|const char *|querylocale_2008_i				\
+				|const unsigned int index
+S	|locale_t|use_curlocale_scratch
+#   elif defined(USE_THREAD_SAFE_LOCALE_EMULATION) /* && \
          !defined(USE_POSIX_2008_LOCALE) */
+S	|bool	|bool_setlocale_emulate_safe_i				\
+				|const unsigned int index		\
+				|NN const char *new_locale		\
+				|const setlocale_returns ret_type	\
+				|const line_t immediate_caller_line	\
+				|NN const char *higher_caller_file	\
+				|const line_t higher_caller_line
+#   elif defined(USE_LOCALE_THREADS) && !defined(USE_THREAD_SAFE_LOCALE) /* \
+         && !defined(USE_POSIX_2008_LOCALE) && \
+         !defined(USE_THREAD_SAFE_LOCALE_EMULATION) */
 S	|const char *|less_dicey_setlocale_r				\
 				|const int category			\
 				|NULLOK const char *locale
-: Not currently used
-S	|void	|less_dicey_void_setlocale_i				\
-				|const unsigned cat_index		\
-				|NN const char *locale			\
-				|const line_t line
-#     if 0
-S	|bool	|less_dicey_bool_setlocale_r				\
-				|const int cat				\
-				|NN const char *locale
-#     endif /* 0 */
+S	|bool	|less_dicey_bool_setlocale_r					\
+				|const int cat					\
+				|NN const char *new_locale			\
+				|const setlocale_returns ret_type		\
+				|const line_t immediate_caller_line		\
+				|NN const char * const higher_caller_file	\
+				|const line_t higher_caller_line
+S	|const char *|less_dicey_querylocale_r				\
+				|const int category
+
 #   endif /* ( defined(USE_LOCALE_THREADS) && \
-             !defined(USE_THREAD_SAFE_LOCALE) && \
-             !defined(USE_THREAD_SAFE_LOCALE_EMULATION) ) && \
-             !defined(USE_POSIX_2008_LOCALE) */
-#   if !( defined(USE_POSIX_2008_LOCALE) && defined(USE_QUERYLOCALE) )
-:	    regen/embed.pl can't currently cope with 'elif'
-#     if !defined(LC_ALL) || defined(USE_POSIX_2008_LOCALE) || defined(WIN32)
-S	|const char *|calculate_LC_ALL					\
-				|NN const char **individ_locales
-#     endif /* !defined(LC_ALL) || defined(USE_POSIX_2008_LOCALE) || \
-               defined(WIN32) */
-#   endif /* !( defined(USE_POSIX_2008_LOCALE) && defined(USE_QUERYLOCALE) ) */
+             !defined(USE_THREAD_SAFE_LOCALE) ) && \
+             !defined(USE_POSIX_2008_LOCALE) && \
+             !defined(USE_THREAD_SAFE_LOCALE_EMULATION) */
 #   if ( defined(USE_POSIX_2008_LOCALE) && !defined(USE_QUERYLOCALE) ) || \
        defined(WIN32)
 S	|const char *|find_locale_from_environment			\
@@ -4420,12 +4444,6 @@ S	|const char *|wrap_wsetlocale					\
 				|NULLOK const char *locale
 #   endif /* defined(WIN32) */
 # endif /* defined(USE_LOCALE) */
-# if defined(USE_POSIX_2008_LOCALE) || defined(DEBUGGING)
-S	|const char *|get_displayable_string				\
-				|NN const char * const s		\
-				|NN const char * const e		\
-				|const bool is_utf8
-# endif /* defined(USE_POSIX_2008_LOCALE) || defined(DEBUGGING) */
 #endif /* defined(PERL_IN_LOCALE_C) */
 #if defined(PERL_IN_MALLOC_C)
 ST	|int	|adjust_size_and_find_bucket				\
@@ -6102,6 +6120,17 @@ pTd	|bool	|quadmath_format_valid					\
 pTd	|bool	|quadmath_format_needed 				\
 				|NN const char *format
 #endif /* defined(USE_QUADMATH) */
+#if defined(USE_THREAD_SAFE_LOCALE_EMULATION)
+Cp	|void	|category_lock_i|unsigned cat_index			\
+				|NN const char *file			\
+				|const line_t line
+Cp	|void	|category_unlock_i					\
+				|unsigned cat_index			\
+				|NN const char *file			\
+				|const line_t line
+CIp	|int	|posix_LC_foo_	|const int c				\
+				|const U8 classnum
+#endif /* defined(USE_THREAD_SAFE_LOCALE_EMULATION) */
 #if defined(VMS) || defined(WIN32)
 Cp	|int	|do_aspawn	|NULLOK SV *really			\
 				|NN SV **mark				\

@@ -640,13 +640,13 @@ VER_NV:
 
             LC_NUMERIC_LOCK(0);    /* Start critical section */
 
-            locale_name_on_entry = setlocale(LC_NUMERIC, NULL);
+            locale_name_on_entry = Perl_setlocale(LC_NUMERIC, NULL);
             if (   strNE(locale_name_on_entry, "C")
                 && strNE(locale_name_on_entry, "POSIX"))
             {
                 /* the setlocale() call might free or overwrite the name */
                 locale_name_on_entry = savepv(locale_name_on_entry);
-                setlocale(LC_NUMERIC, "C");
+                Perl_setlocale(LC_NUMERIC, "C");
             }
             else {  /* This value indicates to the restore code that we didn't
                        change the locale */
@@ -673,7 +673,7 @@ VER_NV:
 #  ifndef USE_POSIX_2008_LOCALE
 
             if (locale_name_on_entry) {
-                setlocale(LC_NUMERIC, locale_name_on_entry);
+                Perl_setlocale(LC_NUMERIC, locale_name_on_entry);
                 Safefree(locale_name_on_entry);
             }
 
