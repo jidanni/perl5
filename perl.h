@@ -7173,18 +7173,18 @@ the plain locale pragma without a parameter (S<C<use locale>>) is in effect.
             CLANG_DIAG_IGNORE(-Wthread-safety)                              \
             if (LIKELY(PL_locale_mutex_depth <= 0)) {                       \
                 DEBUG_Lv(PerlIO_printf(Perl_debug_log,                      \
-                         "%s: %d: locking locale; depth=1\n",               \
+                         "%s: %d: locking locale; lock depth=1\n",          \
                          __FILE__, __LINE__));                              \
                 MUTEX_LOCK(&PL_locale_mutex);                               \
                 PL_locale_mutex_depth = 1;                                  \
                 DEBUG_Lv(PerlIO_printf(Perl_debug_log,                      \
-                         "%s: %d: locale locked; depth=1\n",               \
+                         "%s: %d: locale locked; lock depth=1\n",           \
                          __FILE__, __LINE__));                              \
             }                                                               \
             else {                                                          \
                 PL_locale_mutex_depth++;                                    \
                 DEBUG_Lv(PerlIO_printf(Perl_debug_log,                      \
-                        "%s: %d: avoided locking locale; new depth=%d\n",   \
+                        "%s: %d: avoided locking locale; new lock depth=%d\n",\
                         __FILE__, __LINE__, PL_locale_mutex_depth));        \
                 if (cond_to_panic_if_already_locked) {                      \
                     locale_panic_("Trying to lock locale incompatibly: "    \
@@ -7201,7 +7201,7 @@ the plain locale pragma without a parameter (S<C<use locale>>) is in effect.
                         __FILE__, __LINE__));                               \
             if (LIKELY(PL_locale_mutex_depth == 1)) {                       \
                 DEBUG_Lv(PerlIO_printf(Perl_debug_log,                      \
-                         "%s: %d: unlocking locale; new depth=0\n",         \
+                         "%s: %d: unlocking locale; new lock depth=0\n",    \
                          __FILE__, __LINE__));                              \
                 PL_locale_mutex_depth = 0;                                  \
                 MUTEX_UNLOCK(&PL_locale_mutex);                             \
@@ -7215,8 +7215,8 @@ the plain locale pragma without a parameter (S<C<use locale>>) is in effect.
             else {                                                          \
                 PL_locale_mutex_depth--;                                    \
                 DEBUG_Lv(PerlIO_printf(Perl_debug_log,                      \
-                        "%s: %d: avoided unlocking locale; new depth=%d\n", \
-                        __FILE__, __LINE__, PL_locale_mutex_depth));        \
+                    "%s: %d: avoided unlocking locale; new lock depth=%d\n",\
+                    __FILE__, __LINE__, PL_locale_mutex_depth));            \
             }                                                               \
         } STMT_END
 
