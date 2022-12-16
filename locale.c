@@ -656,7 +656,7 @@ S_less_dicey_setlocale_r(pTHX_ const int category, const char * locale)
 
     PERL_ARGS_ASSERT_LESS_DICEY_SETLOCALE_R;
 
-    POSIX_SETLOCALE_LOCK;
+    STDIZED_SETLOCALE_LOCK;
 
     retval = stdized_setlocale(category, locale);
 
@@ -666,7 +666,7 @@ S_less_dicey_setlocale_r(pTHX_ const int category, const char * locale)
     retval = save_to_buffer(retval,
                             &PL_stdize_locale_buf, &PL_stdize_locale_bufsize);
 
-    POSIX_SETLOCALE_UNLOCK;
+    STDIZED_SETLOCALE_UNLOCK;
 
     return retval;
 }
@@ -874,9 +874,9 @@ S_my_querylocale_i(pTHX_ const unsigned int index)
     DEBUG_Lv(PerlIO_printf(Perl_debug_log, "my_querylocale_i(%s) on %p\n",
                                            category_names[index], cur_obj));
     if (cur_obj == LC_GLOBAL_LOCALE) {
-        POSIX_SETLOCALE_LOCK;
-        retval = posix_setlocale(category, NULL);
-        POSIX_SETLOCALE_UNLOCK;
+        STDIZED_SETLOCALE_LOCK;
+        retval = stdized_setlocale(category, NULL);
+        STDIZED_SETLOCALE_UNLOCK;
     }
     else {
 
@@ -897,8 +897,10 @@ S_my_querylocale_i(pTHX_ const unsigned int index)
                                ? &PL_cur_LC_ALL
                                : &PL_curlocales[index];
         if (*which == NULL) {
+            STDIZED_SETLOCALE_LOCK;
             retval = stdized_setlocale(category, NULL);
             *which = savepv(retval);
+            STDIZED_SETLOCALE_UNLOCK;
         }
         else {
             retval = *which;
@@ -1481,22 +1483,24 @@ S_stdize_locale(pTHX_ const int category,
 
         for (i = 0; i < NOMINAL_LC_ALL_INDEX; i++) {
             Size_t this_size = 0;
+            POSIX_SETLOCALE_LOCK;
+            const char * posix_name = posix_setlocale(categories[i], NULL);
+            posix_name = savepv(posix_name);
+            POSIX_SETLOCALE_UNLOCK;
+
             individ_locales[i] = stdize_locale(categories[i],
-                                               posix_setlocale(categories[i],
-                                                               NULL),
+                                               posix_name,
                                                &individ_locales[i],
                                                &this_size,
                                                caller_line);
 
-            /* If the size didn't change, it means this category did not have
-             * to be adjusted, and individ_locales[i] points to the buffer
-             * returned by posix_setlocale(); we have to copy that before
-             * it's called again in the next iteration */
-            if (this_size == 0) {
-                individ_locales[i] = savepv(individ_locales[i]);
-            }
-            else {
+            /* If the size changed, it means this category had to be adjusted
+             * so individ_locales[i] points to a safe copy, so can free
+             * 'posix_name'.  Otherwise individ_locales[i] points to the safe
+             * copy in 'posix_name' that we created above. */
+            if (this_size != 0) {
                 made_changes = TRUE;
+                Safefree(posix_name);
             }
         }
 
@@ -5386,7 +5390,11 @@ Perl_init_i18nl10n(pTHX_ int printwarn)
         /* setlocale() return vals; not copied so must be looked at
          * immediately. */
         const char * sl_result[NOMINAL_LC_ALL_INDEX + 1];
+
+        STDIZED_SETLOCALE_LOCK;
         sl_result[LC_ALL_INDEX_] = stdized_setlocale(LC_ALL, trial_locale);
+        STDIZED_SETLOCALE_UNLOCK;
+
         DEBUG_LOCALE_INIT(LC_ALL_INDEX_, trial_locale, sl_result[LC_ALL_INDEX_]);
         if (! sl_result[LC_ALL_INDEX_]) {
             setlocale_failure = TRUE;
@@ -5407,11 +5415,15 @@ Perl_init_i18nl10n(pTHX_ int printwarn)
         if (! setlocale_failure) {
             unsigned int j;
             for (j = 0; j < NOMINAL_LC_ALL_INDEX; j++) {
+                STDIZED_SETLOCALE_LOCK;
                 curlocales[j] = stdized_setlocale(categories[j], trial_locale);
                 if (! curlocales[j]) {
                     setlocale_failure = TRUE;
                 }
-                curlocales[j] = savepv(curlocales[j]);
+                else {
+                    curlocales[j] = savepv(curlocales[j]);
+                }
+                STDIZED_SETLOCALE_UNLOCK;
                 DEBUG_LOCALE_INIT(j, trial_locale, curlocales[j]);
             }
 
@@ -5634,7 +5646,9 @@ Perl_init_i18nl10n(pTHX_ int printwarn)
 
             for (j = 0; j < NOMINAL_LC_ALL_INDEX; j++) {
                 Safefree(curlocales[j]);
+                STDIZED_SETLOCALE_LOCK;
                 curlocales[j] = savepv(stdized_setlocale(categories[j], NULL));
+                STDIZED_SETLOCALE_UNLOCK;
                 DEBUG_LOCALE_INIT(j, NULL, curlocales[j]);
             }
         }
