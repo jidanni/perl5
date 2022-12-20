@@ -170,8 +170,8 @@ if (   $define{HAS_POSIX_2008_LOCALE}
 if ($define{USE_LOCALE_THREADS} && ! $define{NO_THREAD_SAFE_LOCALE})
 {
     if (    $define{USE_POSIX_2008_LOCALE}
-        || ($define{WIN32} && (   $cctype !~ /\D/
-                               && $cctype >= 80)))
+        || ($define{WIN32} && (   $cctype !~ /\D/ && $cctype >= 80)
+                               || $define{UCRT_USED}))
     {
         $define{USE_THREAD_SAFE_LOCALE} = 1;
     }
@@ -194,7 +194,9 @@ if ($define{WIN32} && $define{USE_THREAD_SAFE_LOCALE})
 {
     $define{USE_PL_CUR_LC_ALL} = 1;
 
-    if ($cctype < 140) {
+    if (   ($cctype =~ /\D/ && ! $define{UCRT_USED})
+        || $cctype < 140)
+    {
         $define{TS_W32_BROKEN_LOCALECONV} = 1;
     }
 }
