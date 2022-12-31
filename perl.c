@@ -1125,7 +1125,7 @@ perl_destruct(pTHXx)
     PL_collation_name = NULL;
 #endif
 #if defined(USE_PL_CURLOCALES)
-    for (i = 0; i < (int) C_ARRAY_LENGTH(PL_curlocales); i++) {
+    for (i = 0; i < PERL_LOCALE_CATEGORIES_ALL_COUNT_; i++) {
         Safefree(PL_curlocales[i]);
         PL_curlocales[i] = NULL;
     }
