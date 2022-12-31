@@ -719,3 +719,6 @@ esac
 # Furthermore, OpenIndiana seems to effectively require building perl
 # shared, or otherwise perl scripts won't even find the Perl library.
 useshrplib='true'
+
+# Solaris isn't currently thread safe.  races occurred
+d_newlocale=undef
