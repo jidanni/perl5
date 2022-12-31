@@ -322,14 +322,14 @@ d_printf_format_null='undef'
 # Interpreting: https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=211743#c10
 # khw workaround no longer needed except for the following versions
 FREEBSD_KERNEL_VERSION=`uname -U`
-if  [     $FREEBSD_KERNEL_VERSION -lt 1003507           \
-   -o \(  $FREEBSD_KERNEL_VERSION -ge 1100000           \
-       -a $FREEBSD_KERNEL_VERSION -lt 1100502 \)        \
-   -o \(  $FREEBSD_KERNEL_VERSION -ge 1200000           \
-       -a $FREEBSD_KERNEL_VERSION -lt 1200004 \) ]
-then
+#if  [     $FREEBSD_KERNEL_VERSION -lt 1003507           \
+#   -o \(  $FREEBSD_KERNEL_VERSION -ge 1100000           \
+#       -a $FREEBSD_KERNEL_VERSION -lt 1100502 \)        \
+#   -o \(  $FREEBSD_KERNEL_VERSION -ge 1200000           \
+#       -a $FREEBSD_KERNEL_VERSION -lt 1200004 \) ]
+#then
     d_uselocale='undef'
-fi
+#fi
 
 # https://github.com/Perl/perl5/issues/15984
 # Reported in 11.0-CURRENT with g++-4.8.5:
