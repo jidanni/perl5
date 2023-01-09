@@ -707,7 +707,6 @@ d_nexttoward=''
 d_nice=''
 d_nl_langinfo=''
 d_nl_langinfo_l=''
-d_thread_safe_nl_langinfo_l=''
 d_off64_t=''
 d_open3=''
 d_fpathconf=''
@@ -16724,16 +16723,6 @@ eval $inhdr
 
 set nl_langinfo_l d_nl_langinfo_l
 eval $inlibc
-case "$d_nl_langinfo_l" in
-"$define")
-    case "$d_thread_safe_nl_langinfo_l" in
-        "$define")      ;;
-        "$undef")      ;;
-        *)              d_thread_safe_nl_langinfo_l="$define" ;;
-    esac
-    ;;
-*)              d_thread_safe_nl_langinfo_l="$undef";;
-esac
 
 : Look for non 'int'-sized bitfields
 case "$d_non_int_bitfields" in
@@ -18138,6 +18127,10 @@ eval $inlibc
 : see if setlinebuf exists
 set setlinebuf d_setlinebuf
 eval $inlibc
+
+: see if locale.h is available
+set locale.h i_locale
+eval $inhdr
 
 : see if this system has wctype.h
 set wctype.h i_wctype
@@ -25102,7 +25095,6 @@ d_telldir='$d_telldir'
 d_telldirproto='$d_telldirproto'
 d_tgamma='$d_tgamma'
 d_thread_local='$d_thread_local'
-d_thread_safe_nl_langinfo_l='$d_thread_safe_nl_langinfo_l'
 d_time='$d_time'
 d_timegm='$d_timegm'
 d_times='$d_times'
