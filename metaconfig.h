@@ -13,10 +13,7 @@
  * Symbols should only be here temporarily. Once they are actually used,
  * they should be removed from here.
  *
- * HAS_NON_INT_BITFIELDS
- * HAS_STRXFRM_L
- * HAS_NL_LANGINFO_L
- * HAS_FFS
- * HAS_FFSL
- *
+ * LC_ALL_USES_NAME_VALUE_PAIRS
+ * LC_ALL_SEPARATOR
+ * LC_ALL_CATEGORY_POSITIONS_INIT
  */

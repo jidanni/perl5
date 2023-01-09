@@ -953,6 +953,11 @@ d_wcsxfrm=''
 d_wctomb=''
 d_writev=''
 default_inc_excludes_dot=''
+d_lc_all_category_positions_init=''
+d_lc_all_separator=''
+d_lc_all_uses_name_value_pairs=''
+lc_all_category_positions_init=''
+lc_all_separator=''
 dlext=''
 bin_ELF=''
 cccdlflags=''
@@ -16131,6 +16136,274 @@ eval $inlibc
 set killpg d_killpg
 eval $inlibc
 
+: Check the syntax of LC_ALL when categories are set to different locales
+echo " "
+$echo "Checking the syntax of LC_ALL when categories are set to different locales..." >&4
+
+$rm -f try try.*
+$cat >try.c <<EOF
+#include <limits.h>
+#include <locale.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+
+#ifndef LC_ALL
+
+int
+main (const int argc, const char ** argv)
+{
+}
+
+#else
+#  define C_ARRAY_LENGTH(a)	(sizeof(a)/sizeof((a)[0]))
+#  define strNE(s1,s2) (strcmp(s1,s2) != 0)
+#  define Copy(s,d,n,t)	(void)memcpy((char*)(d),(const char*)(s), (n) * sizeof(t))
+#  define memEQ(s1,s2,l) (memcmp(((const void *) (s1)), ((const void *) (s2)), l) == 0)
+#  define memNE(s1,s2,l) (! memEQ(s1,s2,l))
+
+int
+main (const int argc, const char ** argv)
+{
+    /* All categories Perl knows about on any system.  If any are missing, this
+     * won't work for that system, and they must be added here and in perl.h,
+     * locale.c */
+    const int categories[] = {
+
+#  ifdef LC_CTYPE
+        LC_CTYPE,
+#  endif
+#  ifdef LC_NUMERIC
+        LC_NUMERIC,
+#  endif
+#  ifdef LC_COLLATE
+        LC_COLLATE,
+#  endif
+#  ifdef LC_TIME
+        LC_TIME,
+#  endif
+#  ifdef LC_MESSAGES
+        LC_MESSAGES,
+#  endif
+#  ifdef LC_MONETARY
+        LC_MONETARY,
+#  endif
+#  ifdef LC_ADDRESS
+        LC_ADDRESS,
+#  endif
+#  ifdef LC_IDENTIFICATION
+        LC_IDENTIFICATION,
+#  endif
+#  ifdef LC_MEASUREMENT
+        LC_MEASUREMENT,
+#  endif
+#  ifdef LC_PAPER
+        LC_PAPER,
+#  endif
+#  ifdef LC_TELEPHONE
+        LC_TELEPHONE,
+#  endif
+#  ifdef LC_NAME
+        LC_NAME,
+#  endif
+#  ifdef LC_SYNTAX
+        LC_SYNTAX,
+#  endif
+#  ifdef LC_TOD
+        LC_TOD
+#  endif
+
+    };
+
+    char alternate[1024] = { '\0' } ;
+    const char * candidates[] = {
+                                  "POSIX",
+                                  "C.UTF-8",
+                                  "en_US",
+                                  "en_US.UTF-8",
+                                  "American",
+                                  "English",
+                                };
+    char separator[1024];
+    size_t separator_len = 0;
+
+    for (unsigned int i = 0; i < C_ARRAY_LENGTH(candidates); i++) {
+        const char * locale_name = setlocale(LC_ALL, candidates[i]);
+        if (locale_name == NULL) {  /* Not on this system */
+            continue;
+        }
+
+        /* What is important is only that the name that setlocale(..., NULL)
+         * retrieves is distinguishable from 'C' */
+        if (strNE(locale_name, "C")) {
+            strncpy(alternate, locale_name, sizeof(alternate));
+            break;
+        }
+    }
+
+    if (strlen(alternate) == 0) {
+        fprintf(stderr, "Couldn't find a locale distinguishable from C\n");
+        return 1;
+    }
+
+    /* An example syntax, from cygwin, is:
+     *     LC_COLLATE/LC_CTYPE/LC_MONETARY/LC_NUMERIC/LC_TIME/LC_MESSAGES
+     * The locales for a given category are always in the same position,
+     * indicated above, with a slash separating them */
+
+    int map_LC_ALL_position_to_category[C_ARRAY_LENGTH(categories)];
+
+    /* Initialize */
+    for (unsigned int i = 0; i < C_ARRAY_LENGTH(categories); i++) {
+        map_LC_ALL_position_to_category[i] = INT_MAX;
+    }
+
+    const char * lc_all = NULL;
+
+    /* We need to find the category that goes in each position */
+    for (unsigned int i = 0; i < C_ARRAY_LENGTH(categories); i++) {
+
+        /* First set everything to 'C' */
+        if (! setlocale(LC_ALL, "C")) {
+            goto couldnt_find_sep;
+        }
+
+        /* Then set this category to the alternate */
+        if (! setlocale(categories[i], alternate)) {
+            goto couldnt_find_sep;
+        }
+
+        /* Then find what the system says LC_ALL looks like with just this one
+         * category not set to 'C' */
+        lc_all = setlocale(LC_ALL, NULL);
+        if (! lc_all) {
+            goto couldnt_find_sep;
+        }
+
+        /* Assume is name=value pairs if the result contains an equals. */
+        if (strchr(lc_all, '=')) {
+            fprintf(stdout, "\"=\"\n\n");
+            return 0;
+        }
+
+        /* Here isn't name=value pairs.  Find the position of the alternate */
+        const char * alt_pos = strstr(lc_all, alternate);
+        if (! alt_pos) {
+            goto couldnt_find_sep;
+        }
+
+        /* Parse the LC_ALL string from the beginning up to where the alternate
+         * locale is */
+        const char * s = lc_all;
+        int count = 0;
+        while (s < alt_pos) {
+
+            /* Count the 'C' locales before the non-C one.  (Note the letter
+             * 'C' can only occur as the entire 'C' locale, since all of them
+             * are that locale before 'alt_pos') */
+            const char * next_C = (const char *) memchr(s, 'C', alt_pos - s);
+            if (next_C) {
+                count++;
+                s = next_C + 1;
+                continue;
+            }
+
+            /* Here, there is no 'C' between 's' and the alternate locale, so
+             * 'count' gives the total number of occurrences of 'C' in that
+             * span.  If count is 0, this is the first category in an LC_ALL
+             * string, and we know its position, but not the separator. */
+            if (count == 0) {
+                break;
+            }
+
+            /* When 'count' isn't 0,  's' points to one past the previous 'C'.
+             * The separator starts here, ending just before the non-C locale.
+             */
+
+            const char * new_sep = s;
+            unsigned int new_sep_len = alt_pos - s;
+
+            /* If we don't already have a separator saved, save this as it */
+            if (separator_len == 0) {
+                separator_len = new_sep_len;
+                Copy(s, separator, separator_len, char);
+                separator[separator_len] = '\0';
+            }
+            else {  /* Otherwise make sure it's the same string as previously
+                     * calculated */
+                if (   new_sep_len != separator_len
+                    || memNE(separator, new_sep, separator_len))
+                {
+                    goto couldnt_find_sep;
+                }
+            }
+
+            /* Here, we have found the position of category[i] in LC_ALL. */
+            break;
+
+        } /* End of loop parsing the LC_ALL string */
+
+        if (map_LC_ALL_position_to_category[count] != INT_MAX) {
+            fprintf(stderr, "Categories %d and %d both appear to occupy"
+                            " position %d in LC_ALL; there is something"
+                            " wrong with the calculation\n",
+                            categories[count], categories[i],
+                            count);
+            return 1;
+        }
+
+        /* Save the position of this category */
+        map_LC_ALL_position_to_category[count] = categories[i];
+
+    } /* End of loop through all the categories */
+
+    fprintf(stdout, "\"%s\"\n{", separator);
+    for (unsigned int i = 0; i < C_ARRAY_LENGTH(categories) - 1; i++) {
+        fprintf(stdout, " %d,", map_LC_ALL_position_to_category[i]);
+    }
+    fprintf(stdout, " %d }\n", map_LC_ALL_position_to_category[
+                                                C_ARRAY_LENGTH(categories) - 1]);
+    return 0;
+
+  couldnt_find_sep:
+    fprintf(stderr, "Couldn't find a separator\n");
+    return 1;
+
+}
+
+#endif
+EOF
+set try
+if eval $compile_ok; then
+    output=`$run ./try 2>/dev/null`
+    echo "'$output'" >&4
+    separator=`echo "$output" | $sed 1q`
+    echo "'$separator'" >&4
+    case $separator in
+	"\"=\"")
+            d_lc_all_uses_name_value_pairs="$define"
+          d_lc_all_separator="$undef"
+            lc_all_separator=
+	  d_lc_all_category_positions_init="$undef"
+	    lc_all_category_positions_init=
+	    ;;
+	"") d_lc_all_uses_name_value_pairs="$undef"
+            d_lc_all_separator="$undef"
+            lc_all_separator=
+	    d_lc_all_category_positions_init="$undef"
+	    lc_all_category_positions_init=
+	    ;;
+        *)  d_lc_all_uses_name_value_pairs="$undef"
+          d_lc_all_separator="$define"
+            lc_all_separator="$separator"
+	  d_lc_all_category_positions_init="$define"
+	    lc_all_category_positions_init=`echo "$output" | sed -n 2p`
+	    ;;
+    esac
+
+fi
+$rm -f try try.*
+
 : see if localeconv exists
 set localeconv d_locconv
 eval $inlibc
@@ -24827,6 +25100,9 @@ d_isnormal='$d_isnormal'
 d_j0='$d_j0'
 d_j0l='$d_j0l'
 d_killpg='$d_killpg'
+d_lc_all_category_positions_init='$d_lc_all_category_positions_init'
+d_lc_all_separator='$d_lc_all_separator'
+d_lc_all_uses_name_value_pairs='$d_lc_all_uses_name_value_pairs'
 d_lc_monetary_2008='$d_lc_monetary_2008'
 d_lchown='$d_lchown'
 d_ldbl_dig='$d_ldbl_dig'
@@ -25368,6 +25644,8 @@ ivsize='$ivsize'
 ivtype='$ivtype'
 known_extensions='$known_extensions'
 ksh='$ksh'
+lc_all_category_positions_init='$lc_all_category_positions_init'
+lc_all_separator='$lc_all_separator'
 ld='$ld'
 ld_can_script='$ld_can_script'
 lddlflags='$lddlflags'

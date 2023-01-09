@@ -6121,6 +6121,9 @@ $ WC "d_isnormal='" + d_isnormal + "'"
 $ WC "d_j0='" + d_j0 + "'"
 $ WC "d_j0l='undef'"
 $ WC "d_killpg='define'"
+$ WC "d_lc_all_uses_name_value_pairs='define'"
+$ WC "d_lc_all_category_positions_init='undef'"
+$ WC "d_lc_all_separator='undef'"
 $ WC "d_lchown='" + d_lchown + "'"
 $ WC "d_ldbl_dig='define'"
 $ WC "d_ldexpl='" + d_ldexpl + "'"
@@ -6610,6 +6613,8 @@ $!
 $! The xs_extensions symbol may be quite long
 $!
 $ WC/symbol "known_extensions='", xs_extensions, " ", nonxs_ext, " ", nonxs_ext2, "'"
+$ WC "lc_all_separator='" + "'"
+$ WC "lc_all_category_positions_init='" + "'"
 $ WC "ld='" + ld + "'"
 $ WC "ld_can_script='undef'"
 $ WC "lddlflags='/Share'"
