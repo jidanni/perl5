@@ -4277,6 +4277,8 @@ ST	|const char *|save_to_buffer					\
 ST	|unsigned int|get_category_index				\
 				|const int category			\
 				|NULLOK const char *locale
+ST	|int	|get_category_index_nowarn				\
+				|const int category
 S	|void	|new_LC_ALL	|NULLOK const char *unused		\
 				|bool force
 S	|const char *|stdize_locale					\
