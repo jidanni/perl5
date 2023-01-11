@@ -1104,139 +1104,159 @@ violations are fatal.
 #ifdef USE_LOCALE
 #   define HAS_SKIP_LOCALE_INIT /* Solely for XS code to test for this
                                    #define */
-#   if !defined(NO_LOCALE_COLLATE) && defined(LC_COLLATE) \
-       && defined(HAS_STRXFRM)
-#	define USE_LOCALE_COLLATE
-#   endif
-#   if !defined(NO_LOCALE_CTYPE) && defined(LC_CTYPE)
-#	define USE_LOCALE_CTYPE
-#   endif
-#   if !defined(NO_LOCALE_NUMERIC) && defined(LC_NUMERIC)
-#	define USE_LOCALE_NUMERIC
-#   endif
-#   if !defined(NO_LOCALE_MESSAGES) && defined(LC_MESSAGES)
-#	define USE_LOCALE_MESSAGES
-#   endif
-#   if !defined(NO_LOCALE_MONETARY) && defined(LC_MONETARY)
-#	define USE_LOCALE_MONETARY
-#   endif
-#   if !defined(NO_LOCALE_TIME) && defined(LC_TIME)
-#	define USE_LOCALE_TIME
-#   endif
-#   if !defined(NO_LOCALE_ADDRESS) && defined(LC_ADDRESS)
-#	define USE_LOCALE_ADDRESS
-#   endif
-#   if !defined(NO_LOCALE_IDENTIFICATION) && defined(LC_IDENTIFICATION)
-#	define USE_LOCALE_IDENTIFICATION
-#   endif
-#   if !defined(NO_LOCALE_MEASUREMENT) && defined(LC_MEASUREMENT)
-#	define USE_LOCALE_MEASUREMENT
-#   endif
-#   if !defined(NO_LOCALE_PAPER) && defined(LC_PAPER)
-#	define USE_LOCALE_PAPER
-#   endif
-#   if !defined(NO_LOCALE_TELEPHONE) && defined(LC_TELEPHONE)
-#	define USE_LOCALE_TELEPHONE
-#   endif
-#   if !defined(NO_LOCALE_NAME) && defined(LC_NAME)
-#	define USE_LOCALE_NAME
-#   endif
-#   if !defined(NO_LOCALE_SYNTAX) && defined(LC_SYNTAX)
-#	define USE_LOCALE_SYNTAX
-#   endif
-#   if !defined(NO_LOCALE_TOD) && defined(LC_TOD)
-#	define USE_LOCALE_TOD
-#   endif
 
-/* Now create LC_foo_INDEX_ #defines for just those categories on this system */
-#  ifdef USE_LOCALE_CTYPE
-#    define LC_CTYPE_INDEX_             0
-#    define PERL_DUMMY_CTYPE_           LC_CTYPE_INDEX_
-#  else
-#    define PERL_DUMMY_CTYPE_           -1
+/* For each locale category on the system that Perl is supposed to pay
+ * attention to, create a define giving an index number.  We play some games
+ * with the DUMMY defines so that the resulting set of indices of the
+ * categories actually used are contiguous, starting at zero.  The DUMMY that
+ * corresponds to a category is always defined, and effectively adds 0 to the
+ * index if that category doesn't exist; and 1 if it does exist. */
+#  ifdef LC_CTYPE
+#    ifndef NO_LOCALE_CTYPE
+#      define USE_LOCALE_CTYPE
+#      define LC_CTYPE_INDEX_             0
+#      define PERL_DUMMY_CTYPE_           LC_CTYPE_INDEX_
+#    endif
 #  endif
-#  ifdef USE_LOCALE_NUMERIC
-#    define LC_NUMERIC_INDEX_           PERL_DUMMY_CTYPE_ + 1
-#    define PERL_DUMMY_NUMERIC_         LC_NUMERIC_INDEX_
-#  else
-#    define PERL_DUMMY_NUMERIC_         PERL_DUMMY_CTYPE_
+#  ifndef PERL_DUMMY_CTYPE_
+#    define PERL_DUMMY_CTYPE_             -1
 #  endif
-#  ifdef USE_LOCALE_COLLATE
-#    define LC_COLLATE_INDEX_           PERL_DUMMY_NUMERIC_ + 1
-#    define PERL_DUMMY_COLLATE_         LC_COLLATE_INDEX_
-#  else
-#    define PERL_DUMMY_COLLATE_         PERL_DUMMY_NUMERIC_
+#  ifdef LC_NUMERIC
+#    ifndef NO_LOCALE_NUMERIC
+#      define USE_LOCALE_NUMERIC
+#      define LC_NUMERIC_INDEX_           PERL_DUMMY_CTYPE_ + 1
+#      define PERL_DUMMY_NUMERIC_         LC_NUMERIC_INDEX_
+#    endif
 #  endif
-#  ifdef USE_LOCALE_TIME
-#    define LC_TIME_INDEX_              PERL_DUMMY_COLLATE_ + 1
-#    define PERL_DUMMY_TIME_            LC_TIME_INDEX_
-#  else
+#  ifndef PERL_DUMMY_NUMERIC_
+#    define PERL_DUMMY_NUMERIC_           PERL_DUMMY_CTYPE_
+#  endif
+#  ifdef LC_COLLATE
+        /* Perl outsources all its collation efforts to the libc strxfrm(), so
+         * if it isn't available on the system, default "C" locale collation
+         * gets used */
+#    if ! defined(NO_LOCALE_COLLATE) && defined(HAS_STRXFRM)
+#      define USE_LOCALE_COLLATE
+#      define LC_COLLATE_INDEX_           PERL_DUMMY_NUMERIC_ + 1
+#      define PERL_DUMMY_COLLATE_         LC_COLLATE_INDEX_
+#    endif
+#  endif
+#  ifndef PERL_DUMMY_COLLATE_
+#    define PERL_DUMMY_COLLATE_           PERL_DUMMY_NUMERIC_
+#  endif
+#  ifdef LC_TIME
+#    ifndef NO_LOCALE_TIME
+#      define USE_LOCALE_TIME
+#      define LC_TIME_INDEX_              PERL_DUMMY_COLLATE_ + 1
+#      define PERL_DUMMY_TIME_            LC_TIME_INDEX_
+#    endif
+#  endif
+#  ifndef PERL_DUMMY_TIME_
 #    define PERL_DUMMY_TIME_            PERL_DUMMY_COLLATE_
 #  endif
-#  ifdef USE_LOCALE_MESSAGES
-#    define LC_MESSAGES_INDEX_          PERL_DUMMY_TIME_ + 1
-#    define PERL_DUMMY_MESSAGES_        LC_MESSAGES_INDEX_
-#  else
+#  ifdef LC_MESSAGES
+#    ifndef NO_LOCALE_MESSAGES
+#      define USE_LOCALE_MESSAGES
+#      define LC_MESSAGES_INDEX_          PERL_DUMMY_TIME_ + 1
+#      define PERL_DUMMY_MESSAGES_        LC_MESSAGES_INDEX_
+#    endif
+#  endif
+#  ifndef PERL_DUMMY_MESSAGES_
 #    define PERL_DUMMY_MESSAGES_        PERL_DUMMY_TIME_
 #  endif
-#  ifdef USE_LOCALE_MONETARY
-#    define LC_MONETARY_INDEX_          PERL_DUMMY_MESSAGES_ + 1
-#    define PERL_DUMMY_MONETARY_        LC_MONETARY_INDEX_
-#  else
-#    define PERL_DUMMY_MONETARY_        PERL_DUMMY_MESSAGES_
+#  ifdef LC_MONETARY
+#    ifndef NO_LOCALE_MONETARY
+#      define USE_LOCALE_MONETARY
+#      define LC_MONETARY_INDEX_          PERL_DUMMY_MESSAGES_ + 1
+#      define PERL_DUMMY_MONETARY_        LC_MONETARY_INDEX_
+#    endif
 #  endif
-#  ifdef USE_LOCALE_ADDRESS
-#    define LC_ADDRESS_INDEX_           PERL_DUMMY_MONETARY_ + 1
-#    define PERL_DUMMY_ADDRESS_         LC_ADDRESS_INDEX_
-#  else
-#    define PERL_DUMMY_ADDRESS_         PERL_DUMMY_MONETARY_
+#  ifndef PERL_DUMMY_MONETARY_
+#    define PERL_DUMMY_MONETARY_          PERL_DUMMY_MESSAGES_
 #  endif
-#  ifdef USE_LOCALE_IDENTIFICATION
-#    define LC_IDENTIFICATION_INDEX_    PERL_DUMMY_ADDRESS_ + 1
-#    define PERL_DUMMY_IDENTIFICATION_  LC_IDENTIFICATION_INDEX_
-#  else
-#    define PERL_DUMMY_IDENTIFICATION_  PERL_DUMMY_ADDRESS_
+#  ifdef LC_ADDRESS
+#    ifndef NO_LOCALE_ADDRESS
+#      define USE_LOCALE_ADDRESS
+#      define LC_ADDRESS_INDEX_           PERL_DUMMY_MONETARY_ + 1
+#      define PERL_DUMMY_ADDRESS_         LC_ADDRESS_INDEX_
+#    endif
 #  endif
-#  ifdef USE_LOCALE_MEASUREMENT
-#    define LC_MEASUREMENT_INDEX_       PERL_DUMMY_IDENTIFICATION_ + 1
-#    define PERL_DUMMY_MEASUREMENT_     LC_MEASUREMENT_INDEX_
-#  else
-#    define PERL_DUMMY_MEASUREMENT_    PERL_DUMMY_IDENTIFICATION_
+#  ifndef PERL_DUMMY_ADDRESS_
+#    define PERL_DUMMY_ADDRESS_           PERL_DUMMY_MONETARY_
 #  endif
-#  ifdef USE_LOCALE_PAPER
-#    define LC_PAPER_INDEX_             PERL_DUMMY_MEASUREMENT_ + 1
-#    define PERL_DUMMY_PAPER_           LC_PAPER_INDEX_
-#  else
-#    define PERL_DUMMY_PAPER_           PERL_DUMMY_MEASUREMENT_
+#  ifdef LC_IDENTIFICATION
+#    ifndef NO_LOCALE_IDENTIFICATION
+#      define USE_LOCALE_IDENTIFICATION
+#      define LC_IDENTIFICATION_INDEX_    PERL_DUMMY_ADDRESS_ + 1
+#      define PERL_DUMMY_IDENTIFICATION_  LC_IDENTIFICATION_INDEX_
+#    endif
 #  endif
-#  ifdef USE_LOCALE_TELEPHONE
-#    define LC_TELEPHONE_INDEX_         PERL_DUMMY_PAPER_ + 1
-#    define PERL_DUMMY_TELEPHONE_       LC_TELEPHONE_INDEX_
-#  else
-#    define PERL_DUMMY_TELEPHONE_       PERL_DUMMY_PAPER_
+#  ifndef PERL_DUMMY_IDENTIFICATION_
+#    define PERL_DUMMY_IDENTIFICATION_    PERL_DUMMY_ADDRESS_
 #  endif
-#  ifdef USE_LOCALE_NAME
-#    define LC_NAME_INDEX_              PERL_DUMMY_TELEPHONE_ + 1
-#    define PERL_DUMMY_NAME_            LC_NAME_INDEX_
-#  else
-#    define PERL_DUMMY_NAME_            PERL_DUMMY_TELEPHONE_
+#  ifdef LC_MEASUREMENT
+#    ifndef NO_LOCALE_MEASUREMENT
+#      define USE_LOCALE_MEASUREMENT
+#      define LC_MEASUREMENT_INDEX_       PERL_DUMMY_IDENTIFICATION_ + 1
+#      define PERL_DUMMY_MEASUREMENT_     LC_MEASUREMENT_INDEX_
+#    endif
 #  endif
-#  ifdef USE_LOCALE_SYNTAX
-#    define LC_SYNTAX_INDEX_            PERL_DUMMY_NAME + 1
-#    define PERL_DUMMY_SYNTAX_          LC_SYNTAX_INDEX_
-#  else
-#    define PERL_DUMMY_SYNTAX_          PERL_DUMMY_NAME_
+#  ifndef PERL_DUMMY_MEASUREMENT_
+#    define PERL_DUMMY_MEASUREMENT_       PERL_DUMMY_IDENTIFICATION_
 #  endif
-#  ifdef USE_LOCALE_TOD
-#    define LC_TOD_INDEX_               PERL_DUMMY_SYNTAX_ + 1
-#    define PERL_DUMMY_TOD_             LC_TOD_INDEX_
-#  else
-#    define PERL_DUMMY_TOD_             PERL_DUMMY_SYNTAX_
+#  ifdef LC_PAPER
+#    ifndef NO_LOCALE_PAPER
+#      define USE_LOCALE_PAPER
+#      define LC_PAPER_INDEX_             PERL_DUMMY_MEASUREMENT_ + 1
+#      define PERL_DUMMY_PAPER_           LC_PAPER_INDEX_
+#    endif
+#  endif
+#  ifndef PERL_DUMMY_PAPER_
+#    define PERL_DUMMY_PAPER_             PERL_DUMMY_MEASUREMENT_
+#  endif
+#  ifdef LC_TELEPHONE
+#    ifndef NO_LOCALE_TELEPHONE
+#      define USE_LOCALE_TELEPHONE
+#      define LC_TELEPHONE_INDEX_         PERL_DUMMY_PAPER_ + 1
+#      define PERL_DUMMY_TELEPHONE_       LC_TELEPHONE_INDEX_
+#    endif
+#  endif
+#  ifndef PERL_DUMMY_TELEPHONE_
+#    define PERL_DUMMY_TELEPHONE_         PERL_DUMMY_PAPER_
+#  endif
+#  ifdef LC_NAME
+#    ifndef NO_LOCALE_NAME
+#      define USE_LOCALE_NAME
+#      define LC_NAME_INDEX_              PERL_DUMMY_TELEPHONE_ + 1
+#      define PERL_DUMMY_NAME_            LC_NAME_INDEX_
+#    endif
+#  endif
+#  ifndef PERL_DUMMY_NAME_
+#    define PERL_DUMMY_NAME_              PERL_DUMMY_TELEPHONE_
+#  endif
+#  ifdef LC_SYNTAX
+#    ifndef NO_LOCALE_SYNTAX
+#      define USE_LOCALE_SYNTAX
+#      define LC_SYNTAX_INDEX_            PERL_DUMMY_NAME + 1
+#      define PERL_DUMMY_SYNTAX_          LC_SYNTAX_INDEX_
+#    endif
+#  endif
+#  ifndef PERL_DUMMY_SYNTAX_
+#    define PERL_DUMMY_SYNTAX_            PERL_DUMMY_NAME_
+#  endif
+#  ifdef LC_TOD
+#    ifndef NO_LOCALE_TOD
+#      define USE_LOCALE_TOD
+#      define LC_TOD_INDEX_               PERL_DUMMY_SYNTAX_ + 1
+#      define PERL_DUMMY_TOD_             LC_TOD_INDEX_
+#    endif
+#  endif
+#  ifndef PERL_DUMMY_TOD_
+#    define PERL_DUMMY_TOD_               PERL_DUMMY_SYNTAX_
 #  endif
 #  ifdef LC_ALL
-#    define LC_ALL_INDEX_               PERL_DUMMY_TOD_ + 1
+#    define LC_ALL_INDEX_                 PERL_DUMMY_TOD_ + 1
 #  endif
-
 
 #  if defined(USE_ITHREADS) && ! defined(NO_LOCALE_THREADS)
 #    define USE_LOCALE_THREADS
