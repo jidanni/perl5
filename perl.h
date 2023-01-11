@@ -79,13 +79,16 @@ is used in functions that take a thread context initial parameter.
 #endif
 
 /* PERL_IMPLICIT_CONTEXT is a legacy synonym for MULTIPLICITY */
-#ifdef MULTIPLICITY
-#  ifndef PERL_IMPLICIT_CONTEXT
-#    define PERL_IMPLICIT_CONTEXT
-#  endif
+#if defined(MULTIPLICITY)               \
+ && ! defined(PERL_CORE)                \
+ && ! defined(PERL_IMPLICIT_CONTEXT)
+#  define PERL_IMPLICIT_CONTEXT
 #endif
 #if defined(PERL_IMPLICIT_CONTEXT) && !defined(MULTIPLICITY)
 #  define MULTIPLICITY
+#endif
+#ifdef PERL_CORE    /* Make sure doesn't creep back in to core code */
+#  undef PERL_IMPLICIT_CONTEXT
 #endif
 
 /* undef WIN32 when building on Cygwin (for libwin32) - gph */
