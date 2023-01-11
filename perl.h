@@ -7327,8 +7327,8 @@ the plain locale pragma without a parameter (S<C<use locale>>) is in effect.
 
      /* By definition, a thread-unsafe locale means we need a critical
       * section. */
-#    define SETLOCALE_LOCK   LOCALE_LOCK_(0)
-#    define SETLOCALE_UNLOCK LOCALE_UNLOCK_
+#    define LOCALE_LOCK    LOCALE_LOCK_(0)
+#    define LOCALE_UNLOCK  LOCALE_UNLOCK_
 #    ifdef USE_LOCALE_NUMERIC
 #      define LC_NUMERIC_LOCK(cond_to_panic_if_already_locked)              \
                  LOCALE_LOCK_(cond_to_panic_if_already_locked)
@@ -7423,23 +7423,23 @@ the plain locale pragma without a parameter (S<C<use locale>>) is in effect.
  * could change out from under us, we use an exclusive LOCALE lock to prevent
  * that, and a read ENV lock to prevent other threads that have nothing to do
  * with locales here from changing the environment. */
-#ifdef SETLOCALE_LOCK
+#ifdef LOCALE_LOCK
 #  define gwENVr_LOCALEr_LOCK                                               \
-                    STMT_START { SETLOCALE_LOCK; ENV_READ_LOCK; } STMT_END
+                    STMT_START { LOCALE_LOCK; ENV_READ_LOCK; } STMT_END
 #  define gwENVr_LOCALEr_UNLOCK                                             \
-                STMT_START { ENV_READ_UNLOCK; SETLOCALE_UNLOCK; } STMT_END
+                STMT_START { ENV_READ_UNLOCK; LOCALE_UNLOCK; } STMT_END
 #else
 #  define gwENVr_LOCALEr_LOCK           ENV_LOCK
 #  define gwENVr_LOCALEr_UNLOCK         ENV_UNLOCK
 #endif
 
 /* Now that we have defined gwENVr_LOCALEr_LOCK, we can finish defining
- * SETLOCALE_LOCK, which we kept undefined until here on a thread-safe system
+ * LOCALE_LOCK, which we kept undefined until here on a thread-safe system
  * so that we could use that fact to calculate what gwENVr_LOCALEr_LOCK should
  * be */
-#ifndef SETLOCALE_LOCK
-#  define SETLOCALE_LOCK                NOOP
-#  define SETLOCALE_UNLOCK              NOOP
+#ifndef LOCALE_LOCK
+#  define LOCALE_LOCK                NOOP
+#  define LOCALE_UNLOCK              NOOP
 #endif
 
       /* On systems that don't have per-thread locales, even though we don't
@@ -7448,8 +7448,8 @@ the plain locale pragma without a parameter (S<C<use locale>>) is in effect.
        * exclusive lock.  By defining it here with this name, we can, for the
        * most part, hide this detail from the rest of the code */
 /* Currently, the read lock is an exclusive lock */
-#define LOCALE_READ_LOCK                SETLOCALE_LOCK
-#define LOCALE_READ_UNLOCK              SETLOCALE_UNLOCK
+#define LOCALE_READ_LOCK                LOCALE_LOCK
+#define LOCALE_READ_UNLOCK              LOCALE_UNLOCK
 
 #ifdef USE_THREAD_SAFE_LOCALE_EMULATION
 
@@ -7531,23 +7531,23 @@ the plain locale pragma without a parameter (S<C<use locale>>) is in effect.
 #  define WCRTOMB_LOCK_                 NOOP
 #  define WCRTOMB_UNLOCK_               NOOP
 
-#  define LC_CTYPE_LOCK                 SETLOCALE_LOCK
-#  define LC_CTYPE_UNLOCK               SETLOCALE_UNLOCK
+#  define LC_CTYPE_LOCK                 LOCALE_LOCK
+#  define LC_CTYPE_UNLOCK               LOCALE_UNLOCK
 #endif
 
 #if ! defined(LC_COLLATE_LOCK)
-#  define LC_COLLATE_LOCK               SETLOCALE_LOCK
-#  define LC_COLLATE_UNLOCK             SETLOCALE_UNLOCK
+#  define LC_COLLATE_LOCK               LOCALE_LOCK
+#  define LC_COLLATE_UNLOCK             LOCALE_UNLOCK
 #endif
 
 #if ! defined(LC_MESSAGES_LOCK)
-#  define LC_MESSAGES_LOCK              SETLOCALE_LOCK
-#  define LC_MESSAGES_UNLOCK            SETLOCALE_UNLOCK
+#  define LC_MESSAGES_LOCK              LOCALE_LOCK
+#  define LC_MESSAGES_UNLOCK            LOCALE_UNLOCK
 #endif
 
 #if ! defined(LC_MONETARY_LOCK)
-#  define LC_MONETARY_LOCK              SETLOCALE_LOCK
-#  define LC_MONETARY_UNLOCK            SETLOCALE_UNLOCK
+#  define LC_MONETARY_LOCK              LOCALE_LOCK
+#  define LC_MONETARY_UNLOCK            LOCALE_UNLOCK
 #endif
 
 #ifdef LC_TIME_LOCK
@@ -7562,8 +7562,8 @@ the plain locale pragma without a parameter (S<C<use locale>>) is in effect.
 #  define STRFTIME_LOCK                 ENV_LOCK
 #  define STRFTIME_UNLOCK               ENV_UNLOCK
 
-#  define LC_TIME_LOCK                  SETLOCALE_LOCK
-#  define LC_TIME_UNLOCK                SETLOCALE_UNLOCK
+#  define LC_TIME_LOCK                  LOCALE_LOCK
+#  define LC_TIME_UNLOCK                LOCALE_UNLOCK
 #endif
 
 #ifdef USE_LOCALE_NUMERIC
