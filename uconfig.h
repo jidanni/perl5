@@ -3637,7 +3637,7 @@
  *	systems that use a positional notation.  After element [0] is
  *	LC_ALL_SEPARATOR, then the category given by element [1] ....
  */
-/*#define LC_ALL_USES_NAME_VALUE_PAIRS  	/ **/
+#define LC_ALL_USES_NAME_VALUE_PAIRS  	/**/
 /*#define  LC_ALL_CATEGORY_POSITIONS_INIT  	/ **/
 /*#define  LC_ALL_SEPARATOR 	/ **/
 
@@ -5397,5 +5397,5 @@
 
 /* Generated from:
  * 262ad0a533c0ad53cacce3fec2ae058e4bb08a0ed3ab32e14a311d9eb4ef3685 config_h.SH
- * ba17f83c81aa446f7313da2e26764cbae9569c0536d9dcd9b576a4b0905a46c4 uconfig.sh
+ * 3fc1f65887bfc97d0085b8fb10c9e90238fca6c39b834347c117735048c86167 uconfig.sh
  * ex: set ro: */
