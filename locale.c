@@ -5,6 +5,7 @@
  *    userdefprops
  *    a bunch of copies aren't needed on nonthreaded
  *    XXX try not locking querylocale on bsd, darwin, etc
+ *    change NOMINAL loop upper limit
  *    Copyright (C) 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001,
  *    2002, 2003, 2005, 2006, 2007, 2008 by Larry Wall and others
  *
@@ -1305,7 +1306,14 @@ S_querylocale_2008_i(pTHX_ const unsigned int index)
 /*==========================================================================*/
 #  else
 
-    if (index == LC_ALL_INDEX_) {
+    /* If all locales are in the C object, then the answer is "C".  This
+     * reasonably likely case shortcuts extra effort, and hides some bugs from
+     * us in OS's that alias other locales to C, but do so incompletely.  See
+     * https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=269375 */
+    if (uselocale(0) == PL_C_locale_obj) {
+        retval = "C";
+    }
+    else if (index == LC_ALL_INDEX_) {
         retval = calculate_LC_ALL(NULL, INTERNAL_FORMAT);
     }
     else {
@@ -1427,7 +1435,14 @@ S_bool_setlocale_2008_i(pTHX_
 #  endif
 
     if (is_disparate_LC_ALL(new_locale)) {
-        assert(index == LC_ALL_INDEX_);
+
+        /* We might get called with something like
+         *      Perl_setlocale(LC_CTYPE, "C.UTF-8/C/C/C/C/C");
+         * and most, if not all, libc's would return failure instead of trying
+         * to pick out and use which component corresponds to LC_CTYPE */
+        if (index != LC_ALL_INDEX_) {
+            return false;
+        }
         if (! setlocale_from_aggregate_LC_ALL(new_locale, higher_caller_line)) {
             goto failed;
         }
