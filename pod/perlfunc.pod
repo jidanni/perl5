@@ -6306,7 +6306,7 @@ is C<undef>.
 
 If ARRAY is omitted, C<pop> operates on the L<C<@ARGV>|perlvar/@ARGV> array
 in the main program, but the L<C<@_>|perlvar/@_> array in subroutines. C<pop>
-will operate on the C<@ARGV> array in C<eval STRING>, C<BEGIN {}>, C<INIT {}>,
+will also operate on the C<@ARGV> array in C<eval STRING>, C<BEGIN {}>, C<INIT {}>,
 C<CHECK {}> blocks.
 
 Starting with Perl 5.14, an experimental feature allowed
